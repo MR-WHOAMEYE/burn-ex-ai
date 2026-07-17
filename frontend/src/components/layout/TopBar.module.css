@@ -6,8 +6,8 @@
   left: var(--sidebar-width);
   right: 0;
   height: var(--topbar-height);
-  background: rgba(9, 14, 26, 0.7); /* Translucent dark navy backdrop */
-  border-bottom: 1px solid rgba(51, 65, 85, 0.4);
+  background: var(--color-background); /* Theme background */
+  border-bottom: 1px solid var(--color-border);
   display: flex;
   align-items: center;
   justify-content: flex-end; /* Align actions to the right */
@@ -119,8 +119,8 @@
 }
 
 .searchInput {
-  background: rgba(15, 23, 42, 0.6);
-  border: 1px solid rgba(51, 65, 85, 0.6);
+  background: var(--color-surface-elevated);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   padding: var(--space-sm) var(--space-md) var(--space-sm) 36px;
   color: var(--color-foreground);
@@ -132,7 +132,7 @@
 }
 
 .searchInput::placeholder {
-  color: #64748B;
+  color: var(--color-muted);
 }
 
 .searchInput:focus {
@@ -143,7 +143,7 @@
 /* Quick Action Button styling */
 .quickActionBtn {
   background: var(--color-accent);
-  color: #020617 !important;
+  color: var(--color-background) !important;
   font-family: var(--font-display);
   font-size: 0.85rem;
   font-weight: 700;
@@ -163,7 +163,7 @@
   width: 34px;
   height: 34px;
   border-radius: var(--radius-md);
-  border: 1px solid rgba(51, 65, 85, 0.6);
+  border: 1px solid var(--color-border);
   background: transparent;
   color: var(--color-muted);
   cursor: pointer;
@@ -174,7 +174,7 @@
 .iconBtn:hover {
   color: var(--color-foreground);
   border-color: var(--color-accent);
-  background: rgba(34, 197, 94, 0.08);
+  background: var(--color-accent-glow);
 }
 
 /* Notification Bell Red Dot Badge */
@@ -238,10 +238,10 @@
   top: calc(100% + 12px);
   right: 0;
   width: 200px;
-  background: rgba(15, 23, 42, 0.95);
-  border: 1px solid rgba(51, 65, 85, 0.7);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 0 20px rgba(34, 197, 94, 0.03);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 0 20px var(--color-accent-glow);
   backdrop-filter: blur(16px);
   padding: 6px;
   display: flex;
