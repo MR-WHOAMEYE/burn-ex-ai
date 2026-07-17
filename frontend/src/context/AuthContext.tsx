@@ -40,6 +40,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Check local storage for demo mode persistence
+    if (localStorage.getItem('burnex_demo_login') === 'true') {
+      const mockUser = {
+        uid: 'demo-user-123',
+        email: 'demo@burnex.ai',
+        displayName: 'Demo Athlete',
+        photoURL: null,
+        emailVerified: true,
+        getIdToken: async () => 'mock-demo-token-123',
+      } as unknown as FirebaseUser;
+      
+      setUser(mockUser);
+      setToken('mock-demo-token-123');
+      setLoading(false);
+      return;
+    }
+
     // Listen for auth state changes and ID token changes
     const unsubscribe = onIdTokenChanged(auth, async (currentUser) => {
       // Only reset if we are not in mock demo mode
@@ -50,8 +67,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (currentUser) {
         const idToken = await currentUser.getIdToken(true);
         setToken(idToken);
+        localStorage.setItem('token', idToken);
       } else {
         setToken(null);
+        localStorage.removeItem('token');
       }
       setLoading(false);
     });
@@ -84,6 +103,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     setUser(mockUser);
     setToken('mock-demo-token-123');
+    localStorage.setItem('token', 'mock-demo-token-123');
+    localStorage.setItem('burnex_demo_login', 'true');
     setLoading(false);
   };
 
@@ -93,6 +114,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Clear demo user local state
       setUser(null);
       setToken(null);
+      localStorage.removeItem('token');
+      localStorage.removeItem('burnex_demo_login');
       await signOut(auth);
     } catch (error) {
       console.error('Sign out failed:', error);
