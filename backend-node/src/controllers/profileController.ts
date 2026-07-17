@@ -24,7 +24,20 @@ const inMemoryUserProfiles = new Map<string, any>();
 export async function upsertProfile(req: Request, res: Response): Promise<void> {
   try {
     const firebaseUser = req.firebaseUser!;
-    const { heightCm, weightKg, age, biologicalSex, activityLevel, bodyFatPercent } = req.body;
+    const { 
+      heightCm, 
+      weightKg, 
+      age, 
+      biologicalSex, 
+      activityLevel, 
+      bodyFatPercent,
+      displayName,
+      phoneNumber,
+      emergencyContact,
+      medicalInfo,
+      fitnessGoal,
+      profilePhoto
+    } = req.body;
 
     let user;
 
@@ -34,13 +47,18 @@ export async function upsertProfile(req: Request, res: Response): Promise<void> 
         {
           firebaseId: firebaseUser.uid,
           email: firebaseUser.email,
-          displayName: firebaseUser.name || firebaseUser.email,
+          displayName: displayName || firebaseUser.name || firebaseUser.email,
           heightCm,
           weightKg,
           age,
           biologicalSex,
           activityLevel,
-          ...(bodyFatPercent !== undefined && { bodyFatPercent }),
+          bodyFatPercent,
+          phoneNumber,
+          emergencyContact,
+          medicalInfo,
+          fitnessGoal,
+          profilePhoto,
         },
         { upsert: true, new: true, runValidators: true }
       );
@@ -56,13 +74,18 @@ export async function upsertProfile(req: Request, res: Response): Promise<void> 
         _id: new mongoose.Types.ObjectId().toString(),
         firebaseId: firebaseUser.uid,
         email: firebaseUser.email,
-        displayName: firebaseUser.name || firebaseUser.email,
+        displayName: displayName || firebaseUser.name || firebaseUser.email,
         heightCm,
         weightKg,
         age,
         biologicalSex,
         activityLevel,
         bodyFatPercent,
+        phoneNumber,
+        emergencyContact,
+        medicalInfo,
+        fitnessGoal,
+        profilePhoto,
         createdAt: new Date(),
       };
       inMemoryUserProfiles.set(firebaseUser.uid, user);

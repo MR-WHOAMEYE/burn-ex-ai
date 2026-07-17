@@ -1,0 +1,536 @@
+/* 👤 Settings Stylesheet — Burn-Ex AI
+   Premium dark theme, amber accents, digital identity layout */
+
+.settingsPage {
+  padding-top: var(--space-xl);
+  padding-bottom: var(--space-3xl);
+  position: relative;
+  min-height: 80vh;
+}
+
+/* ─── Page Title ─── */
+.pageHeader {
+  margin-bottom: var(--space-xl);
+}
+
+.pageTitle {
+  font-family: var(--font-display);
+  font-size: 2.4rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  color: var(--color-foreground);
+  line-height: 1;
+  margin: 0;
+}
+
+.pageSubtitle {
+  font-size: 0.92rem;
+  color: var(--color-muted);
+  margin-top: 6px;
+  font-family: var(--font-body);
+}
+
+/* ─── 1. Digital Fitness Identity Card ─── */
+.identityCard {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 20px;
+  padding: var(--space-xl);
+  margin-bottom: var(--space-lg);
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
+  transition: border-color var(--transition-base), box-shadow var(--transition-base);
+}
+
+.identityCard:hover {
+  border-color: var(--color-accent);
+  box-shadow: 0 8px 32px rgba(245, 158, 11, 0.04);
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-xl);
+}
+
+.cardHeaderTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.headerIcon {
+  color: var(--color-accent);
+}
+
+.cardHeaderTitle h2 {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-foreground);
+  margin: 0;
+}
+
+.headerBadge {
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  color: var(--color-accent);
+  font-family: var(--font-display);
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  text-transform: uppercase;
+}
+
+/* Layout */
+.identityLayout {
+  display: flex;
+  gap: var(--space-xl);
+  align-items: flex-start;
+}
+
+@media (max-width: 900px) {
+  .identityLayout {
+    flex-direction: column;
+    align-items: center;
+  }
+}
+
+/* Left Column: Avatar */
+.leftCol {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
+  flex-shrink: 0;
+}
+
+.avatarWrapper {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  border: 3px solid var(--color-border);
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.avatarInitial {
+  width: 100%;
+  height: 100%;
+  background: var(--color-surface-elevated);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 2.8rem;
+  font-weight: 800;
+  color: var(--color-accent);
+}
+
+.onlineStatusDot {
+  position: absolute;
+  bottom: 6px;
+  right: 6px;
+  width: 14px;
+  height: 14px;
+  background-color: #22c55e;
+  border: 2.5px solid var(--color-surface);
+  border-radius: 50%;
+  z-index: 2;
+}
+
+.hoverEditButton {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-foreground);
+  font-size: 0.65rem;
+  font-weight: 700;
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+  gap: 2px;
+}
+
+.avatarWrapper:hover .hoverEditButton {
+  opacity: 1;
+}
+
+.metaRow {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.verificationIcon {
+  color: var(--color-accent);
+}
+
+.verifiedText {
+  font-size: 0.72rem;
+  color: var(--color-muted);
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+/* Center Column: Athlete info */
+.centerCol {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+@media (max-width: 900px) {
+  .centerCol {
+    align-items: center;
+    width: 100%;
+  }
+}
+
+.athleteName {
+  font-family: var(--font-display);
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: var(--color-foreground);
+  margin: 0;
+}
+
+.athleteHandle {
+  font-size: 0.85rem;
+  color: var(--color-muted);
+}
+
+.goalPill {
+  display: inline-block;
+  background: var(--color-surface-elevated);
+  border: 1px solid var(--color-border);
+  font-size: 0.78rem;
+  font-family: var(--font-display);
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  margin-top: var(--space-sm);
+  color: var(--color-foreground);
+}
+
+.xpTrackerBlock {
+  width: 100%;
+  margin-top: var(--space-md);
+  margin-bottom: var(--space-sm);
+  max-width: 320px;
+}
+
+.xpLabelsRow {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.72rem;
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--color-muted);
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.xpTrack {
+  height: 5px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.xpFill {
+  height: 100%;
+  background: var(--color-accent);
+}
+
+.memberSinceStamp {
+  font-size: 0.75rem;
+  color: var(--color-muted);
+}
+
+/* Right Column: Stats */
+.rightCol {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--space-md);
+  flex-shrink: 0;
+}
+
+@media (max-width: 900px) {
+  .rightCol {
+    align-items: center;
+    width: 100%;
+  }
+}
+
+.statTilesGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-xs);
+  min-width: 240px;
+}
+
+.statTile {
+  background: var(--color-surface-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.tileLabel {
+  font-size: 0.65rem;
+  color: var(--color-muted);
+  text-transform: uppercase;
+  font-family: var(--font-display);
+}
+
+.tileVal {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.sharingWidget {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--color-surface-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  padding: 8px 12px;
+}
+
+.qrCodeBox {
+  background: #ffffff;
+  padding: 4px;
+  border-radius: 6px;
+  display: flex;
+}
+
+.shareButtons {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* ─── 2. Profile Completion Widget ─── */
+.completionCard {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.03) 0%, rgba(0,0,0,0) 100%);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  border-radius: 20px;
+  padding: var(--space-lg);
+  margin-bottom: var(--space-lg);
+}
+
+.completionHeaderRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-md);
+  margin-bottom: var(--space-md);
+}
+
+.completionLabels h4 {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--color-foreground);
+  margin: 0 0 4px 0;
+}
+
+.completionLabels p {
+  font-size: 0.85rem;
+  color: var(--color-muted);
+}
+
+.completionCircle {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  border: 3.5px solid var(--color-accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--color-accent);
+  flex-shrink: 0;
+}
+
+.missingFieldsList {
+  display: flex;
+  gap: var(--space-xs);
+  flex-wrap: wrap;
+}
+
+.missingTag {
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px dashed rgba(245, 158, 11, 0.25);
+  font-size: 0.78rem;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  color: var(--color-muted);
+}
+
+.missingTag a {
+  color: var(--color-accent);
+  text-decoration: underline;
+  margin-left: 4px;
+}
+
+/* ─── 3. Quick Actions Row ─── */
+.quickActionsRow {
+  display: flex;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-xl);
+  flex-wrap: wrap;
+}
+
+/* ─── 4. Parameters Form ─── */
+.accountSettingsCard {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 20px;
+  padding: var(--space-xl);
+}
+
+.cardHeaderSubtitle {
+  font-size: 0.84rem;
+  color: var(--color-muted);
+  margin-top: 4px;
+  margin-bottom: var(--space-lg);
+}
+
+.saveSuccessAlert {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(34, 197, 94, 0.08);
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  color: #22c55e;
+  font-size: 0.8rem;
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-lg);
+}
+
+.parametersForm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.formRowGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-md);
+}
+
+.inputGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.inputGroup label {
+  font-family: var(--font-display);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--color-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.inputGroup input,
+.inputGroup select,
+.inputGroup textarea {
+  background: var(--color-surface-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 8px 12px;
+  color: var(--color-foreground);
+  font-size: 0.85rem;
+  font-family: var(--font-body);
+  transition: border-color var(--transition-base);
+}
+
+.inputGroup input:focus,
+.inputGroup select:focus,
+.inputGroup textarea:focus {
+  outline: none;
+  border-color: var(--color-accent);
+}
+
+/* ─── Loading State ─── */
+.loadingPage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  gap: var(--space-md);
+  color: var(--color-muted);
+}
+
+.spinner {
+  animation: spin 1s linear infinite;
+  color: var(--color-accent);
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.nameEditWrapper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.editProfileButtonInline {
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  color: var(--color-accent);
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  font-family: var(--font-display);
+  font-weight: 700;
+  text-transform: uppercase;
+  transition: all var(--transition-base);
+}
+
+.editProfileButtonInline:hover {
+  background: var(--color-accent);
+  color: #020617;
+}
+
+.avatarImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}

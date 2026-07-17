@@ -15,6 +15,11 @@ export interface IUser extends Document {
   age: number;
   activityLevel: ActivityLevel;
   bodyFatPercent?: number;
+  phoneNumber?: string;
+  emergencyContact?: string;
+  medicalInfo?: string;
+  fitnessGoal?: string;
+  profilePhoto?: string;
   createdAt: Date;
 }
 
@@ -24,7 +29,7 @@ const UserSchema = new Schema<IUser>({
   displayName: { type: String, required: true },
   biologicalSex: {
     type: String,
-    enum: ['male', 'female', 'prefer-not-to-say'],
+    enum: ['male', 'female', 'prefer-not-to-say', 'other'],
     required: true,
   },
   heightCm: { type: Number, required: true, min: 50, max: 300 },
@@ -36,6 +41,11 @@ const UserSchema = new Schema<IUser>({
     required: true,
   },
   bodyFatPercent: { type: Number, min: 1, max: 70 },
+  phoneNumber: { type: String },
+  emergencyContact: { type: String },
+  medicalInfo: { type: String },
+  fitnessGoal: { type: String },
+  profilePhoto: { type: String },
   createdAt: { type: Date, default: Date.now },
 });
 
