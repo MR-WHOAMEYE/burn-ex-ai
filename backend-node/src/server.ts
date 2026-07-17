@@ -37,7 +37,22 @@ async function bootstrap(): Promise<void> {
 
   // Security & parsing middleware
   app.use(helmet());
-  app.use(cors({ origin: ENV.FRONTEND_ORIGIN, credentials: true }));
+
+  // CORS: in development accept any localhost port (Vite picks a random port
+  // when the default is busy). In production, enforce FRONTEND_ORIGIN exactly.
+  const corsOrigin =
+    ENV.NODE_ENV === 'production'
+      ? ENV.FRONTEND_ORIGIN
+      : (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+          // Allow requests with no origin (e.g. curl, Postman) or any localhost
+          if (!origin || /^http:\/\/localhost(:\d+)?$/.test(origin)) {
+            callback(null, true);
+          } else {
+            callback(new Error(`CORS: origin ${origin} not allowed`));
+          }
+        };
+
+  app.use(cors({ origin: corsOrigin, credentials: true }));
   app.use(express.json({ limit: '10mb' }));
   app.use(morgan('dev'));
 
