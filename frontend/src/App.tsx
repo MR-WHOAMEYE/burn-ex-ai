@@ -30,6 +30,9 @@ const NutritionPage = lazy(() =>
 const AnalyticsPage = lazy(() =>
   import('./pages/Analytics').then(m => ({ default: m.AnalyticsPage }))
 );
+const AchievementsPage = lazy(() =>
+  import('./pages/Achievements').then(m => ({ default: m.AchievementsPage }))
+);
 const LoginPage = lazy(() =>
   import('./pages/Login').then(m => ({ default: m.LoginPage }))
 );
@@ -150,7 +153,14 @@ function AppLayout({
               }
             />
             <Route path="/coach" element={<PlaceholderPage name="AI Coach" />} />
-            <Route path="/achievements" element={<PlaceholderPage name="Achievements" />} />
+            <Route
+              path="/achievements"
+              element={
+                <ProtectedRoute>
+                  <AchievementsPage />
+                </ProtectedRoute>
+              }
+            />
             <Route path="/history" element={<PlaceholderPage name="History" />} />
             <Route path="/settings" element={<PlaceholderPage name="Settings" />} />
           </Routes>
