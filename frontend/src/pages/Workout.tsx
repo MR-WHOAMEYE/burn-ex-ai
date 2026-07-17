@@ -321,18 +321,6 @@ export function WorkoutPage() {
     };
   }, []);
 
-  useEffect(() => {
-    const isLoopActive = isWorkoutActive;
-    if (!isLoopActive) return;
-
-    const int = setInterval(() => {
-      setElapsedSeconds(s => s + 1);
-    }, 1000);
-
-    return () => {
-      clearInterval(int);
-    };
-  }, [isWorkoutActive]);
 
   // Webcam Start/Stop
   const startCamera = useCallback(async () => {
@@ -550,18 +538,26 @@ export function WorkoutPage() {
       alert: null,
     }));
 
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+    }
+
     timerRef.current = setInterval(() => {
       setElapsedSeconds((prev) => {
         const nextSec = prev + 1;
         // Dynamically add data for real-time chart tracking
-        setChartData(cData => [
-          ...cData,
-          {
-            sec: nextSec,
-            calories: Math.round(cData[cData.length - 1]?.calories + Math.random() * 0.5),
-            intensity: Math.round(75 + Math.random() * 15),
-          }
-        ]);
+        setChartData((cData) => {
+          const lastVal = cData[cData.length - 1];
+          const lastCal = lastVal ? lastVal.calories : 0;
+          return [
+            ...cData,
+            {
+              sec: nextSec,
+              calories: Math.round(lastCal + Math.random() * 0.5),
+              intensity: Math.round(75 + Math.random() * 15),
+            },
+          ];
+        });
         return nextSec;
       });
     }, 1000);
