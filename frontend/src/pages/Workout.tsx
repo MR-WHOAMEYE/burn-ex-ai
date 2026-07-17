@@ -16,20 +16,23 @@ import {
   CameraOff,
   Smartphone,
   SmartphoneCharging,
+  Activity,
+  Flame,
+  Zap,
   Play,
   Square,
-  Zap,
+  Mic,
+  MicOff,
   Timer,
-  Flame,
-  Activity,
   Shield,
   AlertTriangle,
   Wifi,
   WifiOff,
   Pause,
 } from 'lucide-react';
-import { classifierEngine } from '../services/classifierEngine';
 import { useAuth } from '../context/AuthContext';
+import { classifierEngine } from '../services/classifierEngine';
+import { GeminiLiveClient } from '../services/geminiLive';
 import styles from './Workout.module.css';
 import type { WorkoutMetrics, PostureGrade } from '../types';
 
@@ -119,6 +122,10 @@ export function WorkoutPage() {
   const [phoneConnected, setPhoneConnected] = useState(false);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Gemini Live Coach state
+  const [isVoiceCoachActive, setIsVoiceCoachActive] = useState(false);
+  const geminiClientRef = useRef<GeminiLiveClient | null>(null);
 
   // User's real body weight for accurate calorie calculation.
   // Fetched from the profile API on mount; falls back to 70kg if unavailable.
@@ -432,8 +439,27 @@ export function WorkoutPage() {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
       stopCamera();
+      if (geminiClientRef.current) {
+        geminiClientRef.current.disconnect();
+      }
     };
   }, [stopCamera]);
+
+  const toggleVoiceCoach = async () => {
+    if (isVoiceCoachActive) {
+      if (geminiClientRef.current) {
+        geminiClientRef.current.disconnect();
+        geminiClientRef.current = null;
+      }
+      setIsVoiceCoachActive(false);
+    } else {
+      if (!videoRef.current) return;
+      const client = new GeminiLiveClient(videoRef.current, addLog);
+      geminiClientRef.current = client;
+      await client.connect();
+      setIsVoiceCoachActive(true);
+    }
+  };
 
   const formatTime = (seconds: number): string => {
     const m = Math.floor(seconds / 60).toString().padStart(2, '0');
@@ -459,10 +485,19 @@ export function WorkoutPage() {
           </div>
 
           {!isWorkoutActive ? (
-            <button className="btn btn-primary" onClick={startWorkout}>
-              <Play size={16} />
-              Start Workout
-            </button>
+            <>
+              <button 
+                className={`btn ${isVoiceCoachActive ? 'btn-primary' : 'btn-outline'}`} 
+                onClick={toggleVoiceCoach}
+              >
+                {isVoiceCoachActive ? <Mic size={16} /> : <MicOff size={16} />}
+                {isVoiceCoachActive ? 'Coach Active' : 'Enable Coach'}
+              </button>
+              <button className="btn btn-primary" onClick={startWorkout}>
+                <Play size={16} />
+                Start Workout
+              </button>
+            </>
           ) : (
             <button 
               className="btn btn-outline" 

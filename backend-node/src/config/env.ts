@@ -28,4 +28,8 @@ export const ENV = {
 
   // CORS
   FRONTEND_ORIGIN: process.env.FRONTEND_ORIGIN || 'http://localhost:5173',
+
+  // Gemini Live
+  GEMINI_API_KEY: process.env.GEMINI_API_KEY || '',
+  GEMINI_MODEL: process.env.GEMINI_MODEL || 'models/gemini-3.1-flash-live-preview',
 } as const;
