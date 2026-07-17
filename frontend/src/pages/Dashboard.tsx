@@ -5,7 +5,7 @@
  * Designed with strict attention to typography, margins, card grouping,
  * micro-animations, and visual balance.
  */
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { QRCodeSVG } from 'qrcode.react';
 import {
@@ -50,6 +50,7 @@ import {
   Dumbbell,
   Calendar,
   Utensils,
+  Loader2,
 } from 'lucide-react';
 import styles from './Dashboard.module.css';
 
@@ -69,6 +70,64 @@ export function DashboardPage() {
   const [phonePaired, setPhonePaired] = useState(true);
   const [workoutActive, setWorkoutActive] = useState(false);
   const [waterGlasses, setWaterGlasses] = useState(5);
+
+  // AI Meal Scanner states & handlers
+  const [protein, setProtein] = useState(85);
+  const [carbs, setCarbs] = useState(180);
+  const [isUploading, setIsUploading] = useState(false);
+  const [dragActive, setDragActive] = useState(false);
+  const [uploadSuccess, setUploadSuccess] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handlePhotoUpload = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleDrag = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === 'dragenter' || e.type === 'dragover') {
+      setDragActive(true);
+    } else if (e.type === 'dragleave') {
+      setDragActive(false);
+    }
+  };
+
+  const processFile = async (file: File) => {
+    setIsUploading(true);
+    setUploadSuccess(null);
+    
+    // Simulate AI image label translation
+    await new Promise((resolve) => setTimeout(resolve, 1800));
+    
+    // Increment protein and carbs dynamically
+    setProtein(prev => Math.min(150, prev + 25));
+    setCarbs(prev => Math.min(250, prev + 45));
+    setUploadSuccess('AI Scanner: Detected Chicken Rice Bowl (+25g Protein, +45g Carbs)');
+    setIsUploading(false);
+
+    // Auto-clear message
+    setTimeout(() => {
+      setUploadSuccess(null);
+    }, 4000);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      processFile(e.dataTransfer.files[0]);
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      processFile(file);
+    }
+  };
   
   // Chatbot State
   const [chatOpen, setChatOpen] = useState(false);
@@ -562,31 +621,71 @@ export function DashboardPage() {
 
           <div className={styles.nutritionContent}>
             {/* Meal Scan zone */}
-            <div className={styles.dropZone}>
-              <UploadCloud size={20} className={styles.uploadIcon} />
-              <span className={styles.dropMain}>AI Meal Scanner</span>
-              <span className={styles.dropSub}>Drag & drop food photo</span>
+            <div 
+              className={`${styles.dropZone} ${dragActive ? styles.dragActive : ''}`}
+              onClick={handlePhotoUpload}
+              onDragEnter={handleDrag}
+              onDragOver={handleDrag}
+              onDragLeave={handleDrag}
+              onDrop={handleDrop}
+            >
+              {isUploading ? (
+                <div className={styles.analyzingZone}>
+                  <Loader2 size={24} className={styles.spinner} />
+                  <span className={styles.dropMain}>Analyzing food photo...</span>
+                </div>
+              ) : (
+                <>
+                  <UploadCloud size={20} className={styles.uploadIcon} />
+                  <span className={styles.dropMain}>AI Meal Scanner</span>
+                  <span className={styles.dropSub}>Drag & drop food photo</span>
+                </>
+              )}
             </div>
+
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleFileChange}
+              style={{ display: 'none' }}
+            />
+
+            {uploadSuccess && (
+              <div 
+                style={{ 
+                  fontSize: '0.78rem', 
+                  color: 'var(--color-accent)', 
+                  background: 'rgba(34, 197, 94, 0.08)', 
+                  padding: '8px 12px', 
+                  borderRadius: '8px', 
+                  border: '1px solid rgba(34, 197, 94, 0.2)',
+                  fontFamily: 'var(--font-body)'
+                }}
+              >
+                {uploadSuccess}
+              </div>
+            )}
 
             {/* Macros summary values */}
             <div className={styles.macrosList}>
               <div className={styles.macroProgressItem}>
                 <div className={styles.macroText}>
                   <span>Protein</span>
-                  <span>85g / 150g</span>
+                  <span>{protein}g / 150g</span>
                 </div>
                 <div className={styles.macroMiniBar}>
-                  <div className={styles.macroFill} style={{ width: '56%', background: 'var(--color-border)' }} />
+                  <div className={styles.macroFill} style={{ width: `${Math.min(100, (protein / 150) * 100)}%`, background: 'var(--color-border)' }} />
                 </div>
               </div>
 
               <div className={styles.macroProgressItem}>
                 <div className={styles.macroText}>
                   <span>Carbs</span>
-                  <span>180g / 250g</span>
+                  <span>{carbs}g / 250g</span>
                 </div>
                 <div className={styles.macroMiniBar}>
-                  <div className={styles.macroFill} style={{ width: '72%', background: 'var(--color-accent)' }} />
+                  <div className={styles.macroFill} style={{ width: `${Math.min(100, (carbs / 250) * 100)}%`, background: 'var(--color-accent)' }} />
                 </div>
               </div>
             </div>
