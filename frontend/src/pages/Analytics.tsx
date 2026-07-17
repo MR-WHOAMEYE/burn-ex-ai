@@ -4,7 +4,7 @@
  * Designed under senior product guidelines from WHOOP, Oura Ring, Garmin, and Tesla.
  * Strict color theme compliance: `#37353E` (background), `#44444E` (surface), `#715A5A` (border), `#D3DAD9` (accent).
  */
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   AreaChart,
@@ -42,6 +42,7 @@ import {
   ChevronRight,
   Eye,
   RefreshCw,
+  Loader2,
 } from 'lucide-react';
 import styles from './Analytics.module.css';
 
@@ -65,7 +66,7 @@ export function AnalyticsPage() {
   const [metricFilter, setMetricFilter] = useState<MetricFilter>('all');
   const [pdfGenerating, setPdfGenerating] = useState(false);
   const [selectedWeek, setSelectedWeek] = useState(4); // For the Performance Journey
-  
+
   // AI Live thinking states
   const [aiStatus, setAiStatus] = useState('Correlating telemetry metrics...');
   const [aiPulse, setAiPulse] = useState(true);
@@ -77,7 +78,7 @@ export function AnalyticsPage() {
     const statuses = [
       'Analyzing joint trajectory vectors...',
       'Calculating muscle readiness index...',
-      'Synthesizing biometric weekly correlation...',
+      'Synthesizing biometric correlation...',
       'Syncing cardiovascular recovery offsets...',
       'Computing neuromuscular fatigue limits...',
     ];
@@ -99,74 +100,135 @@ export function AnalyticsPage() {
     };
   }, []);
 
-  // Performance overview data mapping
-  const chartData = [
-    { day: 'Mon', calories: 340, accuracy: 92, intensity: 85, duration: 25 },
-    { day: 'Tue', calories: 420, accuracy: 89, intensity: 90, duration: 35 },
-    { day: 'Wed', calories: 480, accuracy: 95, intensity: 88, duration: 30 },
-    { day: 'Thu', calories: 150, accuracy: 91, intensity: 75, duration: 20 },
-    { day: 'Fri', calories: 530, accuracy: 96, intensity: 94, duration: 40 },
-    { day: 'Sat', centerline: 420, calories: 380, accuracy: 94, intensity: 86, duration: 30 },
-    { day: 'Sun', calories: 240, accuracy: 90, intensity: 78, duration: 15 },
-  ];
+  // ─── Dynamic Factor Calculations ───
+  const timeFactor = timeRange === 'yearly' ? 52 : timeRange === 'monthly' ? 4.3 : 1;
+  const timeLabel = timeRange === 'yearly' ? 'year' : timeRange === 'monthly' ? 'month' : 'week';
+  const prevTimeLabel = timeRange === 'yearly' ? 'last year' : timeRange === 'monthly' ? 'last month' : 'last week';
+  const nextTimeLabel = timeRange === 'yearly' ? 'next year' : timeRange === 'monthly' ? 'next month' : 'next week';
+  const filterFactor = metricFilter === 'cardio' ? 0.6 : metricFilter === 'strength' ? 0.35 : metricFilter === 'recovery' ? 0.15 : 1;
 
-  const radarData = [
-    { subject: 'Strength', A: 92, fullMark: 100 },
-    { subject: 'Mobility', A: 85, fullMark: 100 },
-    { subject: 'Balance', A: 88, fullMark: 100 },
-    { subject: 'Control', A: 94, fullMark: 100 },
-    { subject: 'Accuracy', A: 96, fullMark: 100 },
-    { subject: 'Recovery', A: 89, fullMark: 100 },
-    { subject: 'Consistency', A: 95, fullMark: 100 },
-    { subject: 'Speed', A: 84, fullMark: 100 },
-    { subject: 'Intensity', A: 90, fullMark: 100 },
-  ];
+  // ─── Dynamic Chart Data ───
+  const getChartData = () => {
+    const baseCalories = [340, 420, 480, 150, 530, 380, 240];
+    const baseAcc = [92, 89, 95, 91, 96, 94, 90];
+    const baseDuration = [25, 35, 30, 20, 40, 30, 15];
 
-  const HEATMAP_DATA = Array.from({ length: 28 }, (_, i) => ({
-    day: i + 1,
-    calories: Math.round(Math.random() * 500 + 100),
-    duration: Math.round(Math.random() * 40 + 15),
-    consistency: Math.round(Math.random() * 20 + 80),
-  }));
+    if (timeRange === 'weekly') {
+      const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+      return days.map((day, idx) => ({
+        day,
+        calories: Math.round(baseCalories[idx] * filterFactor),
+        accuracy: Math.round(baseAcc[idx] * (metricFilter === 'recovery' ? 1.02 : 1)),
+        duration: Math.round(baseDuration[idx] * filterFactor),
+      }));
+    } else if (timeRange === 'monthly') {
+      const weeks = ['Week 1', 'Week 2', 'Week 3', 'Week 4'];
+      return weeks.map((w, idx) => ({
+        day: w,
+        calories: Math.round(baseCalories.reduce((a, b) => a + b, 0) * 0.6 * filterFactor * (0.9 + idx * 0.08)),
+        accuracy: Math.round(88 + idx * 2),
+        duration: Math.round(baseDuration.reduce((a, b) => a + b, 0) * 0.6 * filterFactor * (0.9 + idx * 0.05)),
+      }));
+    } else {
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      return months.map((m, idx) => ({
+        day: m,
+        calories: Math.round(baseCalories.reduce((a, b) => a + b, 0) * 2.5 * filterFactor * (0.85 + Math.sin(idx) * 0.15)),
+        accuracy: Math.round(91 + Math.cos(idx) * 2),
+        duration: Math.round(baseDuration.reduce((a, b) => a + b, 0) * 2.5 * filterFactor * (0.85 + Math.sin(idx) * 0.1)),
+      }));
+    }
+  };
 
+  const chartData = getChartData();
+
+  // ─── Dynamic Radar Data ───
+  const getRadarData = () => {
+    const base = [
+      { subject: 'Strength', A: 92, fullMark: 100 },
+      { subject: 'Mobility', A: 85, fullMark: 100 },
+      { subject: 'Balance', A: 88, fullMark: 100 },
+      { subject: 'Control', A: 94, fullMark: 100 },
+      { subject: 'Accuracy', A: 96, fullMark: 100 },
+      { subject: 'Recovery', A: 89, fullMark: 100 },
+      { subject: 'Consistency', A: 95, fullMark: 100 },
+      { subject: 'Speed', A: 84, fullMark: 100 },
+      { subject: 'Intensity', A: 90, fullMark: 100 },
+    ];
+    return base.map(node => {
+      let val = node.A;
+      if (metricFilter === 'cardio') {
+        if (node.subject === 'Speed' || node.subject === 'Intensity') val = Math.min(99, val + 8);
+        if (node.subject === 'Strength') val = Math.max(70, val - 8);
+      } else if (metricFilter === 'strength') {
+        if (node.subject === 'Strength' || node.subject === 'Control') val = Math.min(99, val + 6);
+        if (node.subject === 'Speed') val = Math.max(70, val - 10);
+      } else if (metricFilter === 'recovery') {
+        if (node.subject === 'Recovery' || node.subject === 'Mobility') val = Math.min(99, val + 9);
+        if (node.subject === 'Intensity') val = Math.max(40, val - 30);
+      }
+      return { ...node, A: val };
+    });
+  };
+
+  const radarData = getRadarData();
+
+  // ─── Dynamic Heatmap Data (useMemo stops blinking) ───
+  const HEATMAP_DATA = useMemo(() => {
+    return Array.from({ length: 28 }, (_, i) => {
+      // Deterministic values based on index 'i' to prevent rendering jitter
+      const pseudoRandomCal = ((i * 17) % 300) + 200; // range 200-500
+      const pseudoRandomDur = ((i * 7) % 25) + 15;    // range 15-40
+      const pseudoRandomCons = ((i * 13) % 15) + 85;  // range 85-100
+
+      return {
+        day: i + 1,
+        calories: Math.round(pseudoRandomCal * filterFactor),
+        duration: Math.round(pseudoRandomDur * filterFactor),
+        consistency: Math.round(pseudoRandomCons),
+      };
+    });
+  }, [filterFactor]);
+
+  // ─── Dynamic KPI Definitions ───
   const kpis: KpiData[] = [
     {
       title: 'Calories Burned',
-      value: '2,540 kcal',
-      comparison: '↗ 18% vs last week',
+      value: `${Math.round(2540 * timeFactor * filterFactor).toLocaleString()} kcal`,
+      comparison: `↗ ${metricFilter === 'cardio' ? 24 : 18}% vs ${prevTimeLabel}`,
       isUp: true,
-      prediction: 'Projected 2,820 kcal next week',
+      prediction: `Projected ${Math.round(2820 * timeFactor * filterFactor).toLocaleString()} kcal ${nextTimeLabel}`,
       icon: Flame,
       status: 'optimal',
-      sparkline: [30, 45, 38, 60, 50, 72, 55],
-      progress: 88,
+      sparkline: [30, 45, 38, 60, 50, 72, 55].map(v => v * filterFactor),
+      progress: Math.min(100, Math.round(88 * (metricFilter === 'all' ? 1 : filterFactor * 1.5))),
     },
     {
       title: 'Workout Time',
-      value: '195 mins',
-      comparison: '↗ 12% vs last week',
+      value: `${Math.round(195 * timeFactor * (metricFilter === 'all' ? 1 : filterFactor * 1.3))} mins`,
+      comparison: `↗ ${metricFilter === 'cardio' ? 16 : 12}% vs ${prevTimeLabel}`,
       isUp: true,
-      prediction: 'Target 220 mins on track',
+      prediction: `Target ${Math.round(220 * timeFactor * (metricFilter === 'all' ? 1 : filterFactor * 1.3))} mins on track`,
       icon: Timer,
       status: 'optimal',
-      sparkline: [20, 35, 30, 45, 40, 50, 48],
+      sparkline: [20, 35, 30, 45, 40, 50, 48].map(v => v * (metricFilter === 'all' ? 1 : filterFactor * 1.3)),
       progress: 92,
     },
     {
       title: 'Recovery Score',
-      value: '82%',
-      comparison: '↘ 4% vs last week',
-      isUp: false,
-      prediction: 'Estimated 89% by Tuesday',
+      value: `${metricFilter === 'recovery' ? 91 : metricFilter === 'strength' ? 76 : 82}%`,
+      comparison: metricFilter === 'recovery' ? `↗ 5% vs ${prevTimeLabel}` : `↘ 4% vs ${prevTimeLabel}`,
+      isUp: metricFilter === 'recovery',
+      prediction: `Estimated ${metricFilter === 'recovery' ? 95 : 89}% by Tuesday`,
       icon: Activity,
-      status: 'moderate',
+      status: metricFilter === 'recovery' ? 'optimal' : 'moderate',
       sparkline: [88, 85, 80, 78, 84, 82, 83],
-      progress: 82,
+      progress: metricFilter === 'recovery' ? 91 : 82,
     },
     {
       title: 'Consistency Index',
-      value: '95%',
-      comparison: '↗ 2% vs last week',
+      value: `${metricFilter === 'all' ? 95 : 92}%`,
+      comparison: `↗ 2% vs ${prevTimeLabel}`,
       isUp: true,
       prediction: 'Streak threshold optimal',
       icon: Calendar,
@@ -176,8 +238,8 @@ export function AnalyticsPage() {
     },
     {
       title: 'Workout Quality',
-      value: '94%',
-      comparison: '↗ 5% vs last week',
+      value: `${metricFilter === 'strength' ? 96 : 94}%`,
+      comparison: `↗ 5% vs ${prevTimeLabel}`,
       isUp: true,
       prediction: 'Neuromuscular firing rate peak',
       icon: Target,
@@ -187,8 +249,8 @@ export function AnalyticsPage() {
     },
     {
       title: 'Motion Quality',
-      value: '91%',
-      comparison: '↗ 3% vs last week',
+      value: `${metricFilter === 'strength' ? 94 : 91}%`,
+      comparison: `↗ 3% vs ${prevTimeLabel}`,
       isUp: true,
       prediction: 'Minor tilt detected on pushups',
       icon: Zap,
@@ -198,8 +260,8 @@ export function AnalyticsPage() {
     },
     {
       title: 'Workout Readiness',
-      value: '78%',
-      comparison: '↘ 8% vs last week',
+      value: `${metricFilter === 'recovery' ? 88 : 78}%`,
+      comparison: `↘ 8% vs ${prevTimeLabel}`,
       isUp: false,
       prediction: 'Ready for heavy concentric training',
       icon: Compass,
@@ -209,16 +271,40 @@ export function AnalyticsPage() {
     },
     {
       title: 'Muscle Fatigue',
-      value: '22%',
-      comparison: '↗ 14% vs last week',
-      isUp: true,
+      value: `${metricFilter === 'recovery' ? 12 : metricFilter === 'strength' ? 34 : 22}%`,
+      comparison: metricFilter === 'recovery' ? `↘ 8% vs ${prevTimeLabel}` : `↗ 14% vs ${prevTimeLabel}`,
+      isUp: metricFilter !== 'recovery',
       prediction: 'Hamstrings overloading risk',
       icon: AlertTriangle,
-      status: 'action-required',
+      status: metricFilter === 'strength' ? 'action-required' : 'moderate',
       sparkline: [10, 15, 18, 25, 22, 20, 22],
       progress: 22,
     },
   ];
+
+  // ─── Dynamic AI Advisory & Story Reports ───
+  const getStoryReport = () => {
+    const filterText =
+      metricFilter === 'cardio' ? 'Cardiovascular workouts accounted for the bulk of energy expenditure. Aerobic threshold performance values improved.' :
+        metricFilter === 'strength' ? 'Strength rep volume increased. Joint alignment and peak concentric force metrics remained optimal.' :
+          metricFilter === 'recovery' ? 'Active recovery and mobility drills successfully lowered overall muscle overload markers.' :
+            'Calorie output expanded, joint trajectory accuracy values improved, and neuromuscular firing rate peaked.';
+
+    return `During this ${timeLabel}: ${filterText} Daily energy output increased relative to the previous ${timeLabel}. AI suggests tapering intensity downward by 15% tomorrow to prevent joint inflammation.`;
+  };
+
+  const getAdvisoryText = () => {
+    if (metricFilter === 'cardio') {
+      return `Your cardiovascular endurance is performing at 95% efficiency. Heart rate zones show optimal aerobic training this ${timeLabel}. Suggest continuing with high-intensity intervals.`;
+    }
+    if (metricFilter === 'strength') {
+      return `Your peak power and mechanical consistency are performing at 96% efficiency. Daily load volume is stable. Maintain control and stability on concentric extensions.`;
+    }
+    if (metricFilter === 'recovery') {
+      return `Your recovery indicators show excellent parasympathetic nervous system activity. Heart rate variability is in the high green zone. Good for light flexibility work.`;
+    }
+    return `Your mechanical consistency is performing at 95%. Daily energy output increased by 18% with minor recovery depreciation. Recommendation: Execute low-intensity cardio tomorrow to clear lactic accumulation.`;
+  };
 
   const handleDownloadPDF = () => {
     setPdfGenerating(true);
@@ -230,7 +316,7 @@ export function AnalyticsPage() {
 
   return (
     <div className={styles.analyticsPage}>
-      
+
       {/* ─── FILTERS & HEADER ─── */}
       <div className={styles.header}>
         <div>
@@ -325,9 +411,9 @@ export function AnalyticsPage() {
               <Sparkles size={18} className={styles.sparkleIcon} />
               <h2 className={styles.heroCardTitle}>Live AI Advisory</h2>
             </div>
-            
+
             <p className={styles.coachSpeechText}>
-              "Your mechanical consistency is performing at <strong>95%</strong>. Daily energy output increased by <strong>18%</strong> with minor recovery depreciation. Recommendation: Execute low-intensity cardio tomorrow to clear lactic accumulation."
+              "{getAdvisoryText()}"
             </p>
 
             <div className={styles.liveStatusRow}>
@@ -366,21 +452,21 @@ export function AnalyticsPage() {
       <div className={`card ${styles.fitnessStoryCard}`}>
         <div className={styles.storyHeader}>
           <Sparkles size={18} className={styles.storySparkle} />
-          <h3>Weekly Performance Story Report</h3>
+          <h3>{timeRange.charAt(0).toUpperCase() + timeRange.slice(1)} Performance Story Report</h3>
         </div>
         <div className={styles.storyContent}>
           <p>
-            <strong>This week:</strong> Calorie output expanded by <strong>18%</strong>. Joint trajectory accuracy values improved by <strong>6%</strong>. Muscle recovery indicators decreased slightly due to increased load stress. Hydration counts met target limits on 5 separate days. AI suggests tapering intensity downward by 15% tomorrow to prevent joint inflammation.
+            {getStoryReport()}
           </p>
         </div>
       </div>
 
       {/* ─── TWO COLUMN MAIN LAYOUT ─── */}
       <div className={styles.mainGrid}>
-        
+
         {/* LEFT COLUMN: KPI Cards, Charts & Heatmaps */}
         <div className={styles.leftCol}>
-          
+
           {/* SECTION 3: SMART KPI CARDS */}
           <div className={styles.kpiGrid}>
             {kpis.map(kpi => {
@@ -391,7 +477,7 @@ export function AnalyticsPage() {
                     <span className={styles.kpiLabel}>{kpi.title}</span>
                     <IconComponent size={16} className={styles.kpiIcon} />
                   </div>
-                  
+
                   <div className={styles.kpiValueRow}>
                     <span className={styles.kpiVal}>{kpi.value}</span>
                     <span className={kpi.isUp ? styles.trendUpText : styles.trendDownText}>
@@ -472,7 +558,7 @@ export function AnalyticsPage() {
             <div className={`card ${styles.radarCard}`}>
               <h3 className={styles.cardSectionTitle}>Performance Biometric Radar</h3>
               <p className={styles.cardSectionSubtitle}>Accuracies, control, speed, and consistency metrics</p>
-              
+
               <div className={styles.radarContainer}>
                 <ResponsiveContainer width="100%" height={230}>
                   <RadarChart cx="50%" cy="50%" outerRadius="80%" data={radarData}>
@@ -495,7 +581,7 @@ export function AnalyticsPage() {
             <div className={`card ${styles.muscleCard}`}>
               <h3 className={styles.cardSectionTitle}>Muscle Group Recovery Splits</h3>
               <p className={styles.cardSectionSubtitle}>Targeted muscle load factors logged this week</p>
-              
+
               <div className={styles.muscleList}>
                 <div className={styles.muscleItem}>
                   <div className={styles.muscleHeader}>
@@ -547,10 +633,10 @@ export function AnalyticsPage() {
                   if (day.calories >= 450) cellFill = 'var(--color-accent)';
                   else if (day.calories >= 300) cellFill = 'rgba(211, 218, 217, 0.6)';
                   else if (day.calories >= 100) cellFill = 'rgba(211, 218, 217, 0.25)';
-                  
+
                   return (
-                    <div 
-                      key={day.day} 
+                    <div
+                      key={day.day}
                       className={styles.calendarDay}
                       style={{ background: cellFill }}
                       title={`Day ${day.day}: ${day.calories} kcal, ${day.duration} mins`}
@@ -575,7 +661,7 @@ export function AnalyticsPage() {
 
         {/* RIGHT COLUMN: AI COCH, GOAL PREDICTIONS, WORKOUT TIMELINE, RECORDS */}
         <div className={styles.rightCol}>
-          
+
           {/* SECTION 4: LIVE AI COACH */}
           <div className={`card ${styles.aiIntelCard}`}>
             <h3 className={styles.cardSectionTitle}>
@@ -606,7 +692,7 @@ export function AnalyticsPage() {
             <h3 className={styles.cardSectionTitle}>
               <Sparkles size={16} /> Goal Predictor Diagnostics
             </h3>
-            
+
             <div className={styles.predictionRowList}>
               <div className={styles.predictItem}>
                 <span>Estimated Target Met</span>
@@ -632,7 +718,7 @@ export function AnalyticsPage() {
             <h3 className={styles.cardSectionTitle}>
               <Calendar size={16} /> Weekly Progress Timeline
             </h3>
-            
+
             <div className={styles.timelineRowsList}>
               <div className={styles.timelineRow}>
                 <span className={styles.dayTag}>Mon</span>
@@ -654,7 +740,7 @@ export function AnalyticsPage() {
             <h3 className={styles.cardSectionTitle}>
               <Award size={16} /> Personal Records
             </h3>
-            
+
             <div className={styles.exerciseRankList}>
               <div className={styles.rankItem}>
                 <div className={styles.rankMain}>
@@ -679,7 +765,7 @@ export function AnalyticsPage() {
             <h3 className={styles.cardSectionTitle}>
               <Info size={16} /> AI Biometric Correlation Map
             </h3>
-            
+
             <div className={styles.correlationFlow}>
               <div className={styles.flowNode}>Workout Intensity ↗</div>
               <div className={styles.flowArrow}>↓</div>
@@ -702,7 +788,7 @@ export function AnalyticsPage() {
             <h3 className={styles.cardSectionTitle}>
               <Activity size={16} /> Performance Journey splits
             </h3>
-            
+
             <div className={styles.journeySelector}>
               {[1, 2, 3, 4].map(w => (
                 <button
@@ -727,8 +813,8 @@ export function AnalyticsPage() {
           <div className={`card ${styles.weeklyReportCard}`}>
             <h3 className={styles.cardSectionTitle}>Download Performance Report</h3>
             <p className={styles.cardSectionSubtitle}>Share a comprehensive overview of your biometric analytics</p>
-            <button 
-              className="btn btn-primary" 
+            <button
+              className="btn btn-primary"
               onClick={handleDownloadPDF}
               disabled={pdfGenerating}
               style={{ width: '100%', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginTop: '16px' }}

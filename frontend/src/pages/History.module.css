@@ -1,0 +1,742 @@
+/* 📜 Workout History Stylesheet — Burn-Ex AI
+   Premium dark mode, glassmorphism, responsive timeline, replay canvas */
+
+.historyPage {
+  padding-top: var(--space-xl);
+  padding-bottom: var(--space-3xl);
+  position: relative;
+  min-height: 80vh;
+}
+
+/* ─── Page Header ─────────────────────────────────────────── */
+.pageHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-md);
+  margin-bottom: var(--space-xl);
+  flex-wrap: wrap;
+}
+
+.pageTitle {
+  font-family: var(--font-display);
+  font-size: 2.4rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  color: var(--color-foreground);
+  line-height: 1;
+  margin: 0;
+}
+
+.pageSubtitle {
+  font-size: 0.92rem;
+  color: var(--color-muted);
+  margin-top: 6px;
+  font-family: var(--font-body);
+  max-width: 600px;
+}
+
+.exportActions {
+  display: flex;
+  gap: var(--space-xs);
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* ─── Toolbar Grid ─────────────────────────────────────────── */
+.toolbarGrid {
+  display: grid;
+  grid-template-columns: 1.2fr 2fr;
+  gap: var(--space-md);
+  margin-bottom: var(--space-xl);
+  align-items: center;
+}
+
+@media (max-width: 900px) {
+  .toolbarGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.searchBox {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 12px;
+  color: var(--color-muted);
+}
+
+.searchBox input {
+  width: 100%;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 8px 12px 8px 36px;
+  color: var(--color-foreground);
+  font-size: 0.85rem;
+  font-family: var(--font-body);
+  transition: border-color var(--transition-base);
+}
+
+.searchBox input:focus {
+  outline: none;
+  border-color: var(--color-accent);
+}
+
+.filterSelectors {
+  display: flex;
+  gap: var(--space-sm);
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.dropdownSelector {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 6px 12px;
+  color: var(--color-muted);
+}
+
+.dropdownSelector select {
+  background: transparent;
+  border: none;
+  color: var(--color-foreground);
+  font-size: 0.8rem;
+  font-family: var(--font-display);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  outline: none;
+}
+
+.dropdownSelector select option {
+  background: var(--color-surface);
+  color: var(--color-foreground);
+}
+
+/* ─── Summary stat cards ────────────────────────────────────── */
+.weeklySummaryRow {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: var(--space-md);
+  margin-bottom: var(--space-xl);
+}
+
+.summaryMiniCard {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.miniLabel {
+  font-size: 0.72rem;
+  color: var(--color-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-family: var(--font-display);
+}
+
+.miniVal {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--color-foreground);
+}
+
+/* ─── AI Insights Banner ────────────────────────────────────── */
+.weeklyAdvisoryCard {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.04) 0%, rgba(34, 197, 94, 0) 100%);
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  border-radius: 20px;
+  padding: var(--space-lg);
+  margin-bottom: var(--space-xl);
+}
+
+.advisoryHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: var(--space-sm);
+}
+
+.advisoryHeader h3 {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  color: var(--color-accent);
+}
+
+.advisoryBody {
+  font-size: 0.88rem;
+  color: var(--color-muted);
+  line-height: 1.6;
+}
+
+.advisoryTip {
+  margin-top: var(--space-md);
+  background: rgba(34, 197, 94, 0.08);
+  border-left: 3px solid var(--color-accent);
+  padding: var(--space-sm) var(--space-md);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  font-size: 0.8rem;
+  color: var(--color-foreground);
+}
+
+/* ─── Interactive Timeline ──────────────────────────────────── */
+.timelineContainer {
+  position: relative;
+  margin-bottom: var(--space-2xl);
+  padding-left: var(--space-xl);
+}
+
+.timelineConnectorLine {
+  position: absolute;
+  left: 6px;
+  top: 10px;
+  bottom: 10px;
+  width: 2px;
+  background: var(--color-border);
+}
+
+.timelineList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+.timelineWrapper {
+  position: relative;
+}
+
+.timelineNode {
+  position: absolute;
+  left: calc(-1 * var(--space-xl) - 2px);
+  top: 24px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 3px solid var(--color-background);
+  z-index: 2;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.05);
+}
+
+.timelineCard {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 20px;
+  padding: var(--space-lg);
+  cursor: pointer;
+  transition: border-color var(--transition-base), box-shadow var(--transition-base);
+}
+
+.timelineCard:hover {
+  border-color: var(--color-accent);
+  box-shadow: 0 8px 30px rgba(34, 197, 94, 0.04);
+}
+
+.expandedTimelineCard {
+  border-color: var(--color-accent);
+}
+
+/* Header Row */
+.cardHeadingRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+@media (max-width: 768px) {
+  .cardHeadingRow {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+.exerciseHeaderMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.exerciseNameText {
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: var(--color-foreground);
+}
+
+.dateStamp {
+  font-size: 0.78rem;
+  color: var(--color-muted);
+}
+
+.primaryNumbers {
+  display: flex;
+  gap: var(--space-lg);
+}
+
+.headerStatBox {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+@media (max-width: 768px) {
+  .headerStatBox {
+    align-items: flex-start;
+  }
+}
+
+.statBoxLabel {
+  font-size: 0.65rem;
+  color: var(--color-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-family: var(--font-display);
+}
+
+.statBoxVal {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+/* Accordion indicator */
+.cardAccordionIndicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: var(--space-md);
+  font-family: var(--font-display);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--color-muted);
+  border-top: 1px solid var(--color-border);
+  padding-top: var(--space-sm);
+}
+
+/* Expandable Biometrics Layout */
+.expandedContent {
+  margin-top: var(--space-lg);
+  overflow: hidden;
+}
+
+.expandedLayoutGrid {
+  display: grid;
+  grid-template-columns: 1fr 1.1fr;
+  gap: var(--space-xl);
+  border-top: 1px solid var(--color-border);
+  padding-top: var(--space-lg);
+}
+
+@media (max-width: 900px) {
+  .expandedLayoutGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.sectionHeaderTitle {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--color-foreground);
+  margin-bottom: var(--space-md);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Breakdown list */
+.exercisesBreakdownList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: var(--space-lg);
+}
+
+.exerciseDetailItem {
+  background: var(--color-surface-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 10px 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.itemMetaLabel {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.itemTitleName {
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--color-foreground);
+}
+
+.itemMetaLabel span:last-child {
+  font-size: 0.75rem;
+  color: var(--color-muted);
+}
+
+.itemValLabels {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  font-family: var(--font-display);
+  font-weight: 600;
+}
+
+.itemValLabels span:last-child {
+  font-size: 0.75rem;
+  color: var(--color-muted);
+}
+
+/* Comparison Sub Card */
+.comparisonSubCard {
+  background: var(--color-surface-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-md);
+  margin-bottom: var(--space-lg);
+}
+
+.comparisonHeader {
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--color-muted);
+  margin-bottom: var(--space-sm);
+}
+
+.compareValuesRow {
+  display: flex;
+  gap: var(--space-xl);
+}
+
+.compareColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.compareLabel {
+  font-size: 0.68rem;
+  color: var(--color-muted);
+  text-transform: uppercase;
+  font-family: var(--font-display);
+}
+
+.compareColumn strong {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+}
+
+.positiveText {
+  color: var(--color-accent);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.negativeText {
+  color: var(--color-destructive);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.neutralText {
+  color: var(--color-muted);
+  font-size: 0.75rem;
+}
+
+/* Post Workout Fuel */
+.recommendationBox {
+  display: flex;
+  gap: 12px;
+  background: rgba(34, 197, 94, 0.06);
+  border: 1px dashed rgba(34, 197, 94, 0.2);
+  border-radius: var(--radius-lg);
+  padding: var(--space-md);
+}
+
+.recommendationIcon {
+  color: var(--color-accent);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.recommendationBox h5 {
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--color-foreground);
+  margin-bottom: 2px;
+}
+
+.recommendationBox p {
+  font-size: 0.78rem;
+  color: var(--color-muted);
+  line-height: 1.5;
+}
+
+/* Skeletal Replay Canvas */
+.replayContainer {
+  background: var(--color-surface-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-md);
+  margin-bottom: var(--space-lg);
+}
+
+.replayCanvasArea {
+  background: #020617;
+  border-radius: var(--radius-md);
+  position: relative;
+  height: 160px;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+}
+
+.replaySvg {
+  width: 100%;
+  height: 100%;
+}
+
+.replayOverlayText {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  right: 8px;
+  display: flex;
+  justify-content: space-between;
+  font-family: monospace;
+  font-size: 10px;
+  color: var(--color-muted);
+  pointer-events: none;
+}
+
+.replayControls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.replayPlayBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--color-accent);
+  color: #020617;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 6px 12px;
+  font-family: var(--font-display);
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  text-transform: uppercase;
+}
+
+.progressBarWrapper {
+  flex: 1;
+}
+
+.progressBarTrack {
+  height: 4px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progressBarFill {
+  height: 100%;
+  background: var(--color-accent);
+}
+
+.replaySpeedSelectors {
+  display: flex;
+  gap: 4px;
+}
+
+.speedBtn {
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 4px 8px;
+  color: var(--color-muted);
+  font-size: 0.7rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.speedBtnActive {
+  background: var(--color-surface);
+  color: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+/* Mistake logs */
+.timelineSubHeader {
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--color-muted);
+  margin-bottom: var(--space-sm);
+  text-transform: uppercase;
+}
+
+.mistakeLogsWrapper {
+  margin-bottom: var(--space-lg);
+}
+
+.mistakeItemBox {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.8rem;
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.mistakeName {
+  color: var(--color-muted);
+}
+
+.mistakeCount {
+  font-family: var(--font-display);
+  font-weight: 600;
+  color: var(--color-destructive);
+}
+
+/* Coach Advisory feedback */
+.coachAdvisoryBlock {
+  display: flex;
+  gap: 12px;
+  background: rgba(168, 85, 247, 0.06);
+  border: 1px dashed rgba(168, 85, 247, 0.2);
+  border-radius: var(--radius-lg);
+  padding: var(--space-md);
+}
+
+.coachSparkle {
+  color: #A855F7;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.coachAdvisoryBlock h5 {
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--color-foreground);
+  margin-bottom: 2px;
+}
+
+.coachAdvisoryBlock p {
+  font-size: 0.78rem;
+  color: var(--color-muted);
+  line-height: 1.5;
+}
+
+/* ─── Performance Charts Card ───────────────────────────────── */
+.trendsChartCard {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 20px;
+  padding: var(--space-lg);
+}
+
+.chartTitleHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: var(--space-lg);
+}
+
+.chartTitleHeader h3 {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  color: var(--color-foreground);
+}
+
+.chartAreaWrapper {
+  margin-top: var(--space-md);
+}
+
+/* ─── Loading & Error Page States ────────────────────────────── */
+.loadingPage,
+.errorPage,
+.emptyPage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  text-align: center;
+  gap: var(--space-md);
+  padding: var(--space-xl);
+}
+
+.spinnerWrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-md);
+  color: var(--color-muted);
+}
+
+.spinner {
+  animation: spin 1s linear infinite;
+  color: var(--color-accent);
+}
+
+.errorIcon {
+  color: var(--color-destructive);
+}
+
+.errorPage h3,
+.emptyPage h2 {
+  font-family: var(--font-display);
+  font-size: 1.8rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.errorPage p,
+.emptyPage p {
+  color: var(--color-muted);
+  max-width: 440px;
+  line-height: 1.6;
+}
+
+.emptyOrb {
+  font-size: 4rem;
+  filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.1));
+}
