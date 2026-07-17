@@ -39,6 +39,9 @@ const LoginPage = lazy(() =>
 const ProfileSetupPage = lazy(() =>
   import('./pages/ProfileSetup').then(m => ({ default: m.ProfileSetupPage }))
 );
+const HistoryPage = lazy(() =>
+  import('./pages/History').then(m => ({ default: m.HistoryPage }))
+);
 
 // Placeholder pages
 const PlaceholderPage = ({ name }: { name: string }) => (
@@ -166,7 +169,14 @@ function AppLayout({
                 </ProtectedRoute>
               }
             />
-            <Route path="/history" element={<PlaceholderPage name="History" />} />
+            <Route
+              path="/history"
+              element={
+                <ProtectedRoute>
+                  <HistoryPage />
+                </ProtectedRoute>
+              }
+            />
             <Route path="/settings" element={<PlaceholderPage name="Settings" />} />
           </Routes>
         </Suspense>
