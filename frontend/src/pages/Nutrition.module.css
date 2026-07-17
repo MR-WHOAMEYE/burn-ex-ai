@@ -1,0 +1,274 @@
+/* Nutrition page styles */
+
+.nutritionPage {
+  padding-top: var(--space-xl);
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: var(--space-xl);
+  flex-wrap: wrap;
+  gap: var(--space-md);
+}
+
+.subtitle {
+  color: var(--color-muted);
+  font-size: 0.95rem;
+  margin-top: var(--space-xs);
+}
+
+/* Upload Banner */
+.uploadBanner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-md);
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid var(--color-info);
+  border-radius: var(--radius-md);
+  color: var(--color-info);
+  font-size: 0.85rem;
+  margin-bottom: var(--space-lg);
+  overflow: hidden;
+}
+
+.spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Main Grid */
+.mainGrid {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: var(--space-lg);
+  align-items: start;
+}
+
+.leftCol {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+/* Calorie Ring */
+.calorieCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--space-xl) !important;
+}
+
+.calorieRing {
+  position: relative;
+  width: 160px;
+  height: 160px;
+}
+
+.ringSvg {
+  width: 100%;
+  height: 100%;
+}
+
+.ringProgress {
+  transition: stroke-dasharray 1s ease-out;
+}
+
+.ringCenter {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.ringValue {
+  font-family: var(--font-display);
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: var(--color-accent);
+}
+
+.ringLabel {
+  font-size: 0.7rem;
+  color: var(--color-muted);
+}
+
+/* Card Title */
+.cardTitle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  font-size: 0.9rem;
+  margin-bottom: var(--space-lg);
+  color: var(--color-foreground);
+}
+
+/* Macro Bars */
+.macroCard {
+  padding: var(--space-lg) !important;
+}
+
+.macroItem {
+  margin-bottom: var(--space-md);
+}
+
+.macroItem:last-child {
+  margin-bottom: 0;
+}
+
+.macroHeader {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: var(--space-xs);
+}
+
+.macroName {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.macroValues {
+  font-size: 0.8rem;
+  color: var(--color-muted);
+}
+
+.macroBar {
+  width: 100%;
+  height: 8px;
+  background: var(--color-surface-elevated);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.macroFill {
+  height: 100%;
+  border-radius: var(--radius-full);
+}
+
+/* Hydration */
+.hydrationCard {
+  padding: var(--space-lg) !important;
+}
+
+.waterGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-sm);
+  margin-bottom: var(--space-md);
+}
+
+.waterGlass {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-border);
+  cursor: pointer;
+  transition: all var(--transition-base);
+}
+
+.waterGlass:hover {
+  border-color: var(--color-info);
+  color: var(--color-info);
+}
+
+.waterFilled {
+  background: rgba(59, 130, 246, 0.15);
+  border-color: var(--color-info);
+  color: var(--color-info);
+}
+
+/* Meal Log */
+.mealLogCard {
+  padding: var(--space-lg) !important;
+}
+
+.mealList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-lg);
+}
+
+.mealItem {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-md);
+  background: var(--color-surface-elevated);
+  border-radius: var(--radius-md);
+  transition: background var(--transition-base);
+}
+
+.mealItem:hover {
+  background: var(--color-border);
+}
+
+.mealTime {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 0.8rem;
+  color: var(--color-muted);
+  text-transform: uppercase;
+  white-space: nowrap;
+  min-width: 72px;
+}
+
+.mealInfo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.mealName {
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.mealMacros {
+  display: flex;
+  gap: var(--space-md);
+  font-size: 0.75rem;
+  color: var(--color-muted);
+}
+
+.mealMacros span {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.mealCal {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--color-warning);
+  white-space: nowrap;
+}
+
+.addMealBtn {
+  width: 100%;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .mainGrid {
+    grid-template-columns: 1fr;
+  }
+}

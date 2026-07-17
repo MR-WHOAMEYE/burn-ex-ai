@@ -1,0 +1,139 @@
+/* Premium Cyberpunk Sidebar Styles */
+
+.sidebar {
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: var(--sidebar-width);
+  background: #090E1A; /* Sleek dark blue-black background matching the reference */
+  border-right: 1px solid rgba(51, 65, 85, 0.4);
+  display: flex;
+  flex-direction: column;
+  z-index: 50;
+  padding: var(--space-lg) 0; /* Remove horizontal padding at the container root */
+  overflow-y: auto;
+}
+
+/* Brand Header */
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-left: 24px;
+  padding-right: 24px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid rgba(51, 65, 85, 0.35); /* Subtle boundary divider line */
+  margin-bottom: 24px;
+}
+
+.brandIcon {
+  color: var(--color-accent); /* Active green flame icon */
+  filter: drop-shadow(0 0 6px rgba(34, 197, 94, 0.4));
+}
+
+.brandText {
+  font-family: var(--font-display);
+  font-size: 1.9rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-foreground);
+}
+
+/* Navigation List */
+.nav {
+  width: 100%;
+}
+
+.navGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 20px;
+}
+
+.groupLabel {
+  font-family: var(--font-body);
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #475569; /* Slate gray heading */
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding-left: 24px;
+  margin-bottom: 4px;
+}
+
+.navList {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px; /* Spacing between navigation entries */
+}
+
+.navLink {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 24px; /* Link bounds extend full-width */
+  color: #94A3B8; /* Muted steel blue color */
+  text-decoration: none;
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: 1.05rem;
+  transition: color var(--transition-fast), background var(--transition-fast);
+  cursor: pointer;
+}
+
+.navLink:hover {
+  color: var(--color-foreground);
+  background: rgba(30, 41, 59, 0.3);
+}
+
+.navLink.active {
+  color: var(--color-accent) !important; /* Text and icon transition to solid green */
+}
+
+/* Active Indicator capsule aligned flush to the left edge of the sidebar */
+.activeIndicator {
+  position: absolute;
+  left: 0;
+  top: 6px;
+  bottom: 6px;
+  width: 4px;
+  background: var(--color-accent);
+  border-radius: 0 4px 4px 0;
+  box-shadow: 0 0 8px var(--color-accent-glow);
+}
+
+.navIcon {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.navLabel {
+  white-space: nowrap;
+}
+
+/* Bottom Actions Section */
+.bottomSection {
+  border-top: 1px solid rgba(51, 65, 85, 0.35);
+  padding-top: 16px;
+  margin-top: auto; /* Push settings tab to the very bottom */
+}
+
+/* Scrollbar adjustment */
+.sidebar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+  background: rgba(51, 65, 85, 0.5);
+  border-radius: var(--radius-full);
+}

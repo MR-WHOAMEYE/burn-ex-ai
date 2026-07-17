@@ -1,0 +1,965 @@
+/* Premium SaaS Fitness Dashboard Styles */
+
+.dashboard {
+  padding-top: var(--space-md);
+  display: flex;
+  flex-direction: column;
+  gap: 24px; /* Strict 8px spacing system: 24px gap */
+}
+
+/* ─── Hero Row Group ─── */
+.heroRow {
+  display: grid;
+  grid-template-columns: 2.2fr 1fr;
+  gap: 24px;
+}
+
+.premiumHero {
+  position: relative;
+  background: radial-gradient(100% 100% at 0% 0%, rgba(34, 197, 94, 0.12) 0%, rgba(9, 14, 26, 0.8) 100%);
+  border: 1px solid rgba(51, 65, 85, 0.5);
+  border-radius: var(--radius-lg);
+  padding: 32px;
+  overflow: hidden;
+  backdrop-filter: blur(20px);
+}
+
+.heroGlow {
+  position: absolute;
+  top: -20%;
+  left: -10%;
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(34, 197, 94, 0.2) 0%, rgba(34, 197, 94, 0) 70%);
+  filter: blur(40px);
+  pointer-events: none;
+}
+
+.heroContent {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.heroMeta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.heroLabel {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #475569;
+  letter-spacing: 0.1em;
+}
+
+.heroBadge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(34, 197, 94, 0.12);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  color: var(--color-accent);
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  text-transform: uppercase;
+}
+
+.heroTitle {
+  font-family: var(--font-display);
+  font-size: 2.8rem; /* Premium 40px level sizing */
+  font-weight: 800;
+  color: var(--color-foreground);
+  line-height: 1.1;
+  text-transform: none;
+  margin: 0;
+}
+
+.accentName {
+  color: var(--color-accent);
+  background: linear-gradient(90deg, var(--color-accent) 0%, #3B82F6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.heroSubtitle {
+  color: var(--color-muted);
+  font-size: 1.05rem;
+  line-height: 1.5;
+  max-width: 600px;
+}
+
+.heroProgressBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 480px;
+  margin-top: 8px;
+}
+
+.heroProgressInfo {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: var(--color-muted);
+  font-weight: 600;
+}
+
+.heroProgressVal {
+  color: var(--color-foreground);
+}
+
+.heroProgressBar {
+  width: 100%;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.heroProgressFill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--color-accent), #3B82F6);
+  border-radius: var(--radius-full);
+}
+
+.heroActions {
+  display: flex;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+/* AI Coach Card */
+.coachCard {
+  background: rgba(15, 23, 42, 0.55);
+  border: 1px solid rgba(51, 65, 85, 0.5);
+  padding: 24px !important;
+}
+
+.titleWithIcon {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.purpleIcon {
+  color: #A855F7;
+  filter: drop-shadow(0 0 4px rgba(168, 85, 247, 0.5));
+}
+
+.cardTitle {
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--color-foreground);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.badgeSuccess {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--color-accent);
+  background: rgba(34, 197, 94, 0.1);
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(34, 197, 94, 0.2);
+}
+
+.coachContent {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  height: 100%;
+  justify-content: space-between;
+}
+
+.coachBubble {
+  color: var(--color-muted);
+  font-size: 0.85rem;
+  line-height: 1.6;
+  font-style: italic;
+  margin: 0;
+}
+
+.coachMeta {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  background: rgba(9, 14, 26, 0.4);
+  padding: 8px 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(51, 65, 85, 0.25);
+}
+
+.coachStat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.coachLabel {
+  font-size: 0.7rem;
+  color: var(--color-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.coachVal {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.coachActions {
+  display: flex;
+  gap: 8px;
+}
+
+.coachBtn {
+  flex: 1;
+  padding: 6px !important;
+  font-size: 0.8rem !important;
+}
+
+/* ─── ROW 2: PRIMARY METRICS GRID (5 Columns) ─── */
+.metricsGrid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 16px;
+}
+
+.metricCard {
+  background: rgba(9, 14, 26, 0.5);
+  border: 1px solid rgba(51, 65, 85, 0.4);
+  padding: 16px !important;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: all var(--transition-base);
+}
+
+.metricCard:hover {
+  border-color: rgba(34, 197, 94, 0.4);
+  box-shadow: 0 0 15px rgba(34, 197, 94, 0.05);
+  transform: translateY(-2px);
+}
+
+.metricHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.metricTitle {
+  font-size: 0.8rem;
+  color: var(--color-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.trendUp {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  color: var(--color-accent);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.trendDown {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  color: var(--color-destructive);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.metricTag {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--color-muted);
+  border: 1px solid rgba(51, 65, 85, 0.4);
+  font-size: 0.65rem;
+  padding: 1px 6px;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.metricValRow {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.metricNumber {
+  font-family: var(--font-display);
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: var(--color-foreground);
+  line-height: 1;
+}
+
+.metricUnit {
+  font-size: 0.85rem;
+  color: var(--color-muted);
+}
+
+/* Light SVG Sparklines in metrics */
+.sparkline {
+  width: 100%;
+  height: 28px;
+  opacity: 0.75;
+  filter: drop-shadow(0 0 3px rgba(34, 197, 94, 0.2));
+}
+
+.metricStatus {
+  font-size: 0.72rem;
+  color: #64748B;
+}
+
+/* ─── ROW 3: WORKOUT CARD & TELEMETRY HUB ─── */
+.liveGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+.liveCard {
+  background: rgba(15, 23, 42, 0.55);
+  border: 1px solid rgba(51, 65, 85, 0.5);
+  padding: 20px !important;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 230px;
+}
+
+.accentIcon {
+  color: var(--color-accent);
+}
+
+.pulsingBadge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--color-destructive);
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  animation: badgePulse 2s infinite ease-in-out;
+}
+
+@keyframes badgePulse {
+  0%, 100% { opacity: 0.8; }
+  50% { opacity: 1; box-shadow: 0 0 8px rgba(239, 68, 68, 0.2); }
+}
+
+.idleWorkoutPanel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  text-align: center;
+  gap: var(--space-md);
+  padding: var(--space-sm) 0;
+}
+
+.idleText {
+  color: var(--color-muted);
+  font-size: 0.85rem;
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* Active workout block */
+.activeWorkoutPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  flex: 1;
+  justify-content: space-between;
+}
+
+.activeMetricsGroup {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.activeStatItem {
+  display: flex;
+  flex-direction: column;
+  background: rgba(9, 14, 26, 0.4);
+  border: 1px solid rgba(51, 65, 85, 0.3);
+  border-radius: var(--radius-md);
+  padding: 10px;
+  text-align: center;
+}
+
+.activeLabel {
+  font-size: 0.65rem;
+  color: var(--color-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.activeVal {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--color-foreground);
+  margin-top: 4px;
+}
+
+.formScoreBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.formMeta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: var(--color-muted);
+  font-weight: 600;
+}
+
+.formScoreNum {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.workoutControls {
+  display: flex;
+  gap: 12px;
+}
+
+.workoutControls button {
+  flex: 1;
+}
+
+/* Phone Telemetry Widget */
+.phoneWidget {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  flex: 1;
+  justify-content: space-between;
+}
+
+.deviceTelemetryGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.telemetryStat {
+  display: flex;
+  flex-direction: column;
+  background: rgba(9, 14, 26, 0.4);
+  border: 1px solid rgba(51, 65, 85, 0.25);
+  border-radius: var(--radius-md);
+  padding: 8px;
+  text-align: center;
+}
+
+.telemetryLabel {
+  font-size: 0.6rem;
+  color: var(--color-muted);
+  text-transform: uppercase;
+}
+
+.telemetryVal {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--color-foreground);
+  margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.waveformWrapper {
+  background: rgba(9, 14, 26, 0.6);
+  border: 1px solid rgba(51, 65, 85, 0.3);
+  border-radius: var(--radius-md);
+  height: 48px;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+}
+
+.imuWaveform {
+  width: 100%;
+  height: 100%;
+}
+
+.primaryWave {
+  fill: none;
+  stroke: var(--color-accent);
+  stroke-width: 2;
+  stroke-dasharray: 400;
+  animation: waveScroll1 6s linear infinite;
+  filter: drop-shadow(0 0 4px rgba(34, 197, 94, 0.5));
+}
+
+.secondaryWave {
+  fill: none;
+  stroke: rgba(34, 197, 94, 0.2);
+  stroke-width: 1;
+  stroke-dasharray: 400;
+  animation: waveScroll2 8s linear infinite;
+}
+
+.waveformMeta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.75rem;
+  color: var(--color-muted);
+}
+
+.disconnectBtn {
+  background: transparent;
+  border: none;
+  color: var(--color-destructive);
+  font-weight: 700;
+  cursor: pointer;
+  text-transform: uppercase;
+  font-size: 0.7rem;
+}
+
+.disconnectBtn:hover {
+  text-decoration: underline;
+}
+
+.pairWidget {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  text-align: center;
+  gap: var(--space-md);
+}
+
+/* QR Drawer inside card */
+.qrDrawer {
+  border-top: 1px solid var(--color-border);
+  padding-top: 12px;
+  margin-top: 8px;
+}
+
+.qrContent {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: rgba(9, 14, 26, 0.4);
+  padding: 12px;
+  border-radius: var(--radius-md);
+}
+
+.qrInstructions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.8rem;
+  color: var(--color-muted);
+}
+
+.qrCloseBtn {
+  background: transparent;
+  border: 1px solid var(--color-border);
+  color: var(--color-foreground);
+  border-radius: var(--radius-sm);
+  padding: 4px 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  width: fit-content;
+}
+
+.qrCloseBtn:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+/* ─── ROW 4: ANALYTICS & NUTRITION (Split 2fr / 1fr) ─── */
+.mainContentGrid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 24px;
+}
+
+.analyticsCard {
+  background: rgba(15, 23, 42, 0.55);
+  border: 1px solid rgba(51, 65, 85, 0.5);
+  padding: 20px !important;
+}
+
+.chartWrapper {
+  margin-top: 12px;
+}
+
+.nutritionCard {
+  background: rgba(15, 23, 42, 0.55);
+  border: 1px solid rgba(51, 65, 85, 0.5);
+  padding: 20px !important;
+}
+
+.nutritionContent {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.dropZone {
+  border: 1px dashed rgba(51, 65, 85, 0.8);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: rgba(9, 14, 26, 0.3);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.dropZone:hover {
+  border-color: var(--color-accent);
+  background: rgba(34, 197, 94, 0.02);
+}
+
+.uploadIcon {
+  color: var(--color-muted);
+  margin-bottom: 4px;
+}
+
+.dropZone:hover .uploadIcon {
+  color: var(--color-accent);
+}
+
+.dropMain {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--color-foreground);
+}
+
+.dropSub {
+  font-size: 0.7rem;
+  color: var(--color-muted);
+}
+
+.macrosList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.macroProgressItem {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.macroText {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-muted);
+}
+
+.macroMiniBar {
+  width: 100%;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+/* Water tracker */
+.waterTracker {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-top: 1px solid rgba(51, 65, 85, 0.3);
+  padding-top: 12px;
+}
+
+.waterHeader {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-muted);
+}
+
+.waterGlassesGrid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 6px;
+}
+
+.glassBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1;
+  border: 1px solid rgba(51, 65, 85, 0.6);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: rgba(51, 65, 85, 0.8);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.glassBtn:hover {
+  border-color: #3B82F6;
+  color: #3B82F6;
+}
+
+.glassFilled {
+  background: rgba(59, 130, 246, 0.15);
+  border-color: #3B82F6;
+  color: #3B82F6;
+}
+
+/* ─── ROW 5: RECENT WORKOUTS & DAILY QUESTS (Split 2fr / 1fr) ─── */
+.bottomRowGrid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 24px;
+}
+
+.recentWorkoutsCard {
+  background: rgba(15, 23, 42, 0.55);
+  border: 1px solid rgba(51, 65, 85, 0.5);
+  padding: 20px !important;
+}
+
+.recentList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.recentListItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  background: rgba(9, 14, 26, 0.4);
+  border: 1px solid rgba(51, 65, 85, 0.25);
+  border-radius: var(--radius-md);
+  transition: all var(--transition-fast);
+}
+
+.recentListItem:hover {
+  border-color: rgba(34, 197, 94, 0.3);
+  background: rgba(30, 41, 59, 0.2);
+}
+
+.workoutCore {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.workoutThumbnail {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  color: var(--color-accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.workoutMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.workoutName {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--color-foreground);
+  letter-spacing: 0.02em;
+}
+
+.workoutMetaSub {
+  font-size: 0.75rem;
+  color: var(--color-muted);
+}
+
+.workoutEvaluations {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.scoreBadge {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  background: rgba(255, 255, 255, 0.02);
+  padding: 2px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(51, 65, 85, 0.3);
+}
+
+/* Quests widget */
+.questsCard {
+  background: rgba(15, 23, 42, 0.55);
+  border: 1px solid rgba(51, 65, 85, 0.5);
+  padding: 20px !important;
+}
+
+.questXP {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--color-warning);
+  background: rgba(245, 158, 11, 0.1);
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.questWidgetBody {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.xpBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.xpMeta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.78rem;
+  color: var(--color-muted);
+  font-weight: 600;
+}
+
+.questList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.questLabel {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.checkboxBox {
+  width: 15px;
+  height: 15px;
+  border: 1px solid rgba(51, 65, 85, 0.8);
+  border-radius: 4px;
+  background: rgba(9, 14, 26, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 2px;
+  transition: all var(--transition-fast);
+}
+
+.questLabel:hover .checkboxBox {
+  border-color: var(--color-accent);
+}
+
+.questLabel[data-completed="true"] .checkboxBox {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+.checkIcon {
+  color: #020617;
+}
+
+.questText {
+  font-size: 0.8rem;
+  color: var(--color-foreground);
+  line-height: 1.4;
+  transition: color var(--transition-fast);
+}
+
+.questLabel[data-completed="true"] .questText {
+  color: var(--color-muted);
+  text-decoration: line-through;
+}
+
+/* Responsive Breakpoints */
+@media (max-width: 1200px) {
+  .heroRow {
+    grid-template-columns: 1fr;
+  }
+
+  .metricsGrid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .liveGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .mainContentGrid,
+  .bottomRowGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .metricsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .heroTitle {
+    font-size: 2.2rem;
+  }
+
+  .premiumHero {
+    padding: 24px;
+  }
+}
+
+@media (max-width: 480px) {
+  .metricsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .deviceTelemetryGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

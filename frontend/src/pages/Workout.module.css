@@ -1,0 +1,214 @@
+/* Workout Engine page styles */
+
+.workoutPage {
+  padding-top: var(--space-xl);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-xl);
+  flex-wrap: wrap;
+  gap: var(--space-md);
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.connectionBadges {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+/* Main Grid: Camera left, Metrics right */
+.workoutGrid {
+  display: grid;
+  grid-template-columns: 3fr 2fr;
+  gap: var(--space-lg);
+  align-items: start;
+}
+
+/* Camera Panel */
+.cameraPanel {
+  position: sticky;
+  top: calc(var(--topbar-height) + var(--space-lg));
+}
+
+.cameraContainer {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.videoFeed {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1); /* Mirror for selfie view */
+}
+
+.skeletonCanvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  transform: scaleX(-1); /* Match mirrored video */
+}
+
+.calibrationBadge {
+  position: absolute;
+  top: var(--space-md);
+  left: var(--space-md);
+}
+
+.cameraPlaceholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: var(--space-md);
+  color: var(--color-muted);
+  text-align: center;
+  padding: var(--space-xl);
+}
+
+.placeholderIcon {
+  color: var(--color-border);
+}
+
+/* Metrics Panel */
+.metricsPanel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.exerciseCard {
+  text-align: center;
+  padding: var(--space-lg) !important;
+  border-color: var(--color-accent) !important;
+  background: linear-gradient(
+    135deg,
+    var(--color-surface) 0%,
+    rgba(34, 197, 94, 0.05) 100%
+  ) !important;
+}
+
+.exerciseLabel {
+  font-size: 0.75rem;
+  color: var(--color-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.exerciseName {
+  font-size: 1.8rem;
+  color: var(--color-accent);
+  margin-top: var(--space-xs);
+}
+
+/* Metric Cards */
+.metricsRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-md);
+}
+
+.metricCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--space-xs);
+  padding: var(--space-md) !important;
+}
+
+.metricIcon {
+  color: var(--color-accent);
+}
+
+/* Gauge Cards */
+.gaugeCard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  padding: var(--space-md) !important;
+}
+
+.gaugeLabel {
+  font-size: 0.75rem;
+  color: var(--color-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.gaugeBar {
+  width: 100%;
+  height: 6px;
+  background: var(--color-surface-elevated);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.gaugeFill {
+  height: 100%;
+  border-radius: var(--radius-full);
+  transition: width 0.3s ease-out;
+}
+
+.gaugeValue {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+/* Alert Banner */
+.alertBanner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-md);
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid var(--color-destructive);
+  border-radius: var(--radius-md);
+  color: var(--color-destructive);
+  font-size: 0.85rem;
+  font-weight: 500;
+  overflow: hidden;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .workoutGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .cameraPanel {
+    position: static;
+  }
+}
+
+@media (max-width: 640px) {
+  .metricsRow {
+    grid-template-columns: 1fr;
+  }
+
+  .headerActions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

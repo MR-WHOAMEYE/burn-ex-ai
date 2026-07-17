@@ -1,0 +1,332 @@
+/* Premium SaaS Top Navigation Bar Styles */
+
+.topbar {
+  position: fixed;
+  top: 0;
+  left: var(--sidebar-width);
+  right: 0;
+  height: var(--topbar-height);
+  background: rgba(9, 14, 26, 0.7); /* Translucent dark navy backdrop */
+  border-bottom: 1px solid rgba(51, 65, 85, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--space-xl);
+  z-index: 40;
+  backdrop-filter: blur(12px);
+  transition: left var(--transition-slow);
+}
+
+.leftNavGroup {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xl);
+}
+
+.greeting {
+  display: flex;
+  align-items: center;
+}
+
+.welcomeText {
+  font-family: var(--font-body);
+  font-size: 1.05rem;
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: normal;
+  color: var(--color-muted);
+}
+
+.name {
+  color: var(--color-foreground);
+  font-weight: 700;
+}
+
+/* Telemetry Badges Bar */
+.telemetryBar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(51, 65, 85, 0.3);
+  padding: 4px var(--space-sm);
+  border-radius: var(--radius-md);
+}
+
+.telemetryItem {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-muted);
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+}
+
+.telemetryItem span {
+  font-family: var(--font-body);
+}
+
+.streakIcon {
+  color: var(--color-warning); /* Orange glow */
+  filter: drop-shadow(0 0 4px rgba(245, 158, 11, 0.5));
+}
+
+.phoneIcon {
+  color: var(--color-accent); /* Active green */
+  filter: drop-shadow(0 0 4px rgba(34, 197, 94, 0.5));
+}
+
+.timerIcon {
+  color: #3B82F6; /* Active blue */
+}
+
+/* Small Pulsing Green status indicator dot */
+.statusDot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  box-shadow: 0 0 6px var(--color-success);
+  animation: pulseDot 2s infinite ease-in-out;
+}
+
+@keyframes pulseDot {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+/* Search Box */
+.searchBox {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 12px;
+  color: var(--color-muted);
+  pointer-events: none;
+}
+
+.searchInput {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(51, 65, 85, 0.6);
+  border-radius: var(--radius-md);
+  padding: var(--space-sm) var(--space-md) var(--space-sm) 36px;
+  color: var(--color-foreground);
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  width: 200px;
+  outline: none;
+  transition: border-color var(--transition-base), width var(--transition-slow);
+}
+
+.searchInput::placeholder {
+  color: #64748B;
+}
+
+.searchInput:focus {
+  border-color: var(--color-accent);
+  width: 260px;
+}
+
+/* Quick Action Button styling */
+.quickActionBtn {
+  background: var(--color-accent);
+  color: #020617 !important;
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 6px 12px !important;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Icon Action Buttons */
+.iconBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(51, 65, 85, 0.6);
+  background: transparent;
+  color: var(--color-muted);
+  cursor: pointer;
+  position: relative;
+  transition: all var(--transition-fast);
+}
+
+.iconBtn:hover {
+  color: var(--color-foreground);
+  border-color: var(--color-accent);
+  background: rgba(34, 197, 94, 0.08);
+}
+
+/* Notification Bell Red Dot Badge */
+.notificationBtn {
+  position: relative;
+}
+
+.notificationBadge {
+  position: absolute;
+  top: 6px;
+  right: 7px;
+  width: 6px;
+  height: 6px;
+  background: var(--color-destructive);
+  border-radius: 50%;
+  box-shadow: 0 0 6px rgba(239, 68, 68, 0.7);
+}
+
+/* Avatar & Dropdown */
+.profileContainer {
+  position: relative;
+}
+
+.profileTrigger {
+  background: transparent;
+  border: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  padding: 2px;
+}
+
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--color-accent), #3B82F6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: #020617;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.dropdownChevron {
+  color: var(--color-muted);
+  transition: transform var(--transition-base);
+}
+
+.dropdownChevron[data-open="true"] {
+  transform: rotate(180deg);
+}
+
+/* Glassmorphic Dropdown Menu (Stripe / Whoop level polish) */
+.dropdownMenu {
+  position: absolute;
+  top: calc(100% + 12px);
+  right: 0;
+  width: 200px;
+  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid rgba(51, 65, 85, 0.7);
+  border-radius: var(--radius-md);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 0 20px rgba(34, 197, 94, 0.03);
+  backdrop-filter: blur(16px);
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  transform-origin: top right;
+  animation: menuFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes menuFadeIn {
+  from { opacity: 0; transform: scale(0.95) translateY(-5px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.dropdownHeader {
+  display: flex;
+  flex-direction: column;
+  padding: 8px 12px;
+}
+
+.dropdownName {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-foreground);
+}
+
+.dropdownRole {
+  font-size: 0.7rem;
+  color: var(--color-muted);
+  margin-top: 2px;
+}
+
+.dropdownDivider {
+  height: 1px;
+  background: rgba(51, 65, 85, 0.4);
+  margin: 4px 0;
+}
+
+.dropdownItem {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  border: none;
+  background: transparent;
+  color: var(--color-muted);
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  font-weight: 500;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.dropdownItem:hover {
+  color: var(--color-foreground);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.signOutBtn {
+  color: var(--color-destructive);
+}
+
+.signOutBtn:hover {
+  background: rgba(239, 68, 68, 0.08) !important;
+  color: var(--color-destructive) !important;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .telemetryBar {
+    display: none; /* Hide telemetry badges on smaller landscape tablet sizes */
+  }
+}
+
+@media (max-width: 768px) {
+  .topbar {
+    left: 0;
+    padding: 0 var(--space-md);
+  }
+
+  .searchBox,
+  .quickActionBtn {
+    display: none; /* Hide details on mobile header space */
+  }
+}
