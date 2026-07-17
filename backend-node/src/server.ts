@@ -23,6 +23,7 @@ import { verifyFirebaseToken } from './middleware/auth.js';
 import { createSession } from './controllers/sessionController.js';
 import { upsertProfile, getProfile, logWeight } from './controllers/profileController.js';
 import { logWorkout, getWorkoutHistory } from './controllers/workoutController.js';
+import { setupGeminiLiveProxy } from './services/geminiLiveService.js';
 
 async function bootstrap(): Promise<void> {
   // ─── Initialize External Services ─────────────────────────
@@ -95,6 +96,9 @@ async function bootstrap(): Promise<void> {
   }
 
   setupSocketHandlers(io);
+
+  // ─── Gemini Live Proxy ────────────────────────────────────
+  setupGeminiLiveProxy(httpServer);
 
   // ─── Start Server ─────────────────────────────────────────
   httpServer.listen(ENV.PORT, () => {
