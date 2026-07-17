@@ -51,6 +51,7 @@ import {
   RefreshCw,
   Bot,
   Droplets,
+  LogOut,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { classifierEngine } from '../services/classifierEngine';
@@ -189,8 +190,9 @@ export function WorkoutPage() {
   const [currentTimelinePhase, setCurrentTimelinePhase] = useState<'Warmup' | 'Workout' | 'Peak' | 'Cooldown'>('Workout');
   const [hydrationCount, setHydrationCount] = useState(2);
   const [voiceEnabled, setVoiceEnabled] = useState(true);
-  const [spotifyPlaying, setSpotifyPlaying] = useState(true);
-  const [spotifySong, setSpotifySong] = useState('Hyperfocus (SaaS Remix) - Linear Beats');
+  const [spotifyConnected, setSpotifyConnected] = useState(false);
+  const [spotifyPlaying, setSpotifyPlaying] = useState(false);
+  const [spotifySong, setSpotifySong] = useState('Not playing');
   const [coachingAlert, setCoachingAlert] = useState<string>('Keep knees slightly outward');
   const [ghostModeActive, setGhostModeActive] = useState(false);
 
@@ -212,6 +214,124 @@ export function WorkoutPage() {
   const isWorkoutActiveRef = useRef(isWorkoutActive);
   useEffect(() => {
     isWorkoutActiveRef.current = isWorkoutActive;
+  }, [isWorkoutActive]);
+
+  const playerRef = useRef<SpotifyPlayer | null>(null);
+
+  useEffect(() => {
+    // Spotify Web Playback SDK Initialization
+    const initializeSpotify = async () => {
+      try {
+        const statusRes = await fetch('http://127.0.0.1:8080/api/spotify/status');
+        const statusData = await statusRes.json();
+        setSpotifyConnected(statusData.connected);
+
+        if (statusData.connected) {
+          // Define global callback for SDK
+          window.onSpotifyWebPlaybackSDKReady = () => {
+            const player = new window.Spotify.Player({
+              name: 'Burn-Ex AI Player',
+              getOAuthToken: async (cb) => {
+                try {
+                  const tokenRes = await fetch('http://127.0.0.1:8080/api/spotify/token');
+                  const tokenData = await tokenRes.json();
+                  if (tokenData.token) {
+                    cb(tokenData.token);
+                  } else {
+                    console.error('No token received from backend');
+                  }
+                } catch (e) {
+                  console.error('Failed to get token', e);
+                }
+              },
+              volume: 0.5
+            });
+
+            playerRef.current = player;
+
+            // Error handling
+            player.addListener('initialization_error', ({ message }: any) => { console.error(message); });
+            player.addListener('authentication_error', ({ message }: any) => { console.error(message); });
+            player.addListener('account_error', ({ message }: any) => { console.error(message); });
+            player.addListener('playback_error', ({ message }: any) => { console.error(message); });
+
+            // Playback status updates
+            player.addListener('player_state_changed', (state: SpotifyState | null) => {
+              if (!state) {
+                setSpotifySong('Not playing');
+                setSpotifyPlaying(false);
+                return;
+              }
+              const track = state.track_window.current_track;
+              if (track) {
+                setSpotifySong(`${track.name} - ${track.artists.map((a: any) => a.name).join(', ')}`);
+                setSpotifyPlaying(!state.paused);
+              }
+            });
+
+            // Ready
+            player.addListener('ready', ({ device_id }: any) => {
+              console.log('Spotify Web Player Ready with Device ID', device_id);
+              
+              // Automatically transfer playback to this device
+              fetch('http://127.0.0.1:8080/api/spotify/token').then(res => res.json()).then(data => {
+                if (data.token) {
+                  fetch('https://api.spotify.com/v1/me/player', {
+                    method: 'PUT',
+                    headers: {
+                      'Authorization': `Bearer ${data.token}`,
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                      device_ids: [device_id],
+                      play: false,
+                    }),
+                  }).catch(e => console.error('Failed to transfer playback', e));
+                }
+              });
+            });
+
+            // Connect to the player!
+            player.connect();
+          };
+
+          // Dynamically load the Spotify Web Playback SDK script
+          // only after the callback is defined.
+          if (!document.getElementById('spotify-player-script')) {
+            const script = document.createElement('script');
+            script.id = 'spotify-player-script';
+            script.src = 'https://sdk.scdn.co/spotify-player.js';
+            script.async = true;
+            document.body.appendChild(script);
+          } else if (window.Spotify) {
+            window.onSpotifyWebPlaybackSDKReady();
+          }
+        }
+      } catch (e) {
+        console.error('Spotify init error', e);
+      }
+    };
+
+    initializeSpotify();
+
+    return () => {
+      if (playerRef.current) {
+        playerRef.current.disconnect();
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    const isLoopActive = isWorkoutActive;
+    if (!isLoopActive) return;
+
+    const int = setInterval(() => {
+      setElapsedSeconds(s => s + 1);
+    }, 1000);
+
+    return () => {
+      clearInterval(int);
+    };
   }, [isWorkoutActive]);
 
   // Webcam Start/Stop
@@ -741,15 +861,21 @@ export function WorkoutPage() {
             </div>
             <div className={styles.chartWrapper}>
               <ResponsiveContainer width="100%" height={200}>
-                <AreaChart data={chartData}>
+                <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 15 }}>
                   <defs>
                     <linearGradient id="intensityGrad" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="var(--color-accent)" stopOpacity={0.2} />
                       <stop offset="95%" stopColor="var(--color-accent)" stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(81, 60, 141, 0.1)" />
-                  <XAxis dataKey="sec" stroke="var(--color-muted)" fontSize={11} tickLine={false} label={{ value: 'Seconds Elapsed', position: 'bottom', offset: 0, fill: 'var(--color-muted)', fontSize: 10 }} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(250, 177, 98, 0.1)" />
+                  <XAxis 
+                    dataKey="sec" 
+                    stroke="var(--color-muted)" 
+                    fontSize={11} 
+                    tickLine={false} 
+                    label={{ value: 'Seconds Elapsed', position: 'insideBottom', offset: -5, fill: 'var(--color-muted)', fontSize: 9, fontWeight: 600 }} 
+                  />
                   <YAxis stroke="var(--color-muted)" fontSize={11} tickLine={false} />
                   <Area
                     type="monotone"
@@ -771,7 +897,7 @@ export function WorkoutPage() {
             </div>
             <div className={styles.chartWrapper} style={{ display: 'flex', justifyContent: 'center' }}>
               <ResponsiveContainer width="100%" height={200}>
-                <RadarChart cx="50%" cy="50%" outerRadius="80%" data={radarData}>
+                <RadarChart cx="50%" cy="50%" outerRadius="70%" data={radarData}>
                   <PolarGrid stroke="var(--color-border)" />
                   <PolarAngleAxis dataKey="subject" stroke="var(--color-muted)" fontSize={10} />
                   <PolarRadiusAxis stroke="var(--color-border)" fontSize={10} />
@@ -801,23 +927,23 @@ export function WorkoutPage() {
               <div className={styles.muscleList}>
                 <div className={styles.muscleItem}>
                   <span>Quadriceps (Squats)</span>
-                  <span className={styles.muscleBadge} style={{ backgroundColor: metrics.exerciseType.includes('SQUAT') ? 'var(--color-success)' : 'rgba(255,255,255,0.05)' }}>
+                  <span className={styles.muscleBadge} style={{ backgroundColor: metrics.exerciseType.includes('SQUAT') ? 'var(--color-accent)' : 'rgba(255,255,255,0.05)', color: metrics.exerciseType.includes('SQUAT') ? 'var(--color-background)' : 'var(--color-muted)' }}>
                     {metrics.exerciseType.includes('SQUAT') ? 'ACTIVE' : 'IDLE'}
                   </span>
                 </div>
                 <div className={styles.muscleItem}>
                   <span>Triceps (Push-ups)</span>
-                  <span className={styles.muscleBadge} style={{ backgroundColor: metrics.exerciseType.includes('PUSH') ? 'var(--color-success)' : 'rgba(255,255,255,0.05)' }}>
+                  <span className={styles.muscleBadge} style={{ backgroundColor: metrics.exerciseType.includes('PUSH') ? 'var(--color-accent)' : 'rgba(255,255,255,0.05)', color: metrics.exerciseType.includes('PUSH') ? 'var(--color-background)' : 'var(--color-muted)' }}>
                     {metrics.exerciseType.includes('PUSH') ? 'ACTIVE' : 'IDLE'}
                   </span>
                 </div>
                 <div className={styles.muscleItem}>
                   <span>Core Abdominals</span>
-                  <span className={styles.muscleBadge} style={{ backgroundColor: 'rgba(255,255,255,0.05)' }}>IDLE</span>
+                  <span className={styles.muscleBadge} style={{ backgroundColor: 'rgba(255,255,255,0.05)', color: 'var(--color-muted)' }}>IDLE</span>
                 </div>
                 <div className={styles.muscleItem}>
                   <span>Hamstrings</span>
-                  <span className={styles.muscleBadge} style={{ backgroundColor: 'rgba(255,255,255,0.05)' }}>IDLE</span>
+                  <span className={styles.muscleBadge} style={{ backgroundColor: 'rgba(255,255,255,0.05)', color: 'var(--color-muted)' }}>IDLE</span>
                 </div>
               </div>
             </div>
@@ -908,6 +1034,9 @@ export function WorkoutPage() {
                   <div 
                     key={i} 
                     className={`${styles.waterGlassDot} ${i < hydrationCount ? styles.glassFilled : ''}`} 
+                    onClick={() => setHydrationCount(i + 1)}
+                    style={{ cursor: 'pointer' }}
+                    title={`Set water logged to ${i + 1} glasses`}
                   />
                 ))}
               </div>
@@ -921,20 +1050,64 @@ export function WorkoutPage() {
               <span className={styles.cardTitle}>Spotify Music Sync</span>
             </div>
             <div className={styles.musicBody}>
-              <div className={styles.musicSongName} style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: '12px', fontWeight: 'bold' }}>
-                {spotifySong}
-              </div>
-              <div className={styles.musicControlsRow}>
-                <button className={styles.musicBtn} onClick={() => setSpotifyPlaying(!spotifyPlaying)}>
-                  {spotifyPlaying ? 'PAUSE' : 'PLAY'}
-                </button>
-                <button 
-                  className={styles.musicBtn} 
-                  onClick={() => setSpotifySong('Focus Beats Vol. 3 (Electronic Workouts)')}
-                >
-                  <SkipForward size={14} /> SKIP
-                </button>
-              </div>
+              {!spotifyConnected ? (
+                <div style={{ textAlign: 'center', marginTop: '10px' }}>
+                  <button 
+                    className={styles.musicBtn} 
+                    style={{ background: '#1DB954', color: '#fff', border: 'none', padding: '8px 16px' }}
+                    onClick={() => window.location.href = 'http://127.0.0.1:8080/api/spotify/login'}
+                  >
+                    Connect to Spotify
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <div className={styles.musicSongName} style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: '12px', fontWeight: 'bold' }}>
+                    {spotifySong}
+                  </div>
+                  <div className={styles.musicControlsRow}>
+                    <button 
+                      className={styles.musicBtn} 
+                      onClick={() => {
+                        if (playerRef.current) {
+                          playerRef.current.togglePlay();
+                        }
+                      }}
+                    >
+                      {spotifyPlaying ? 'PAUSE' : 'PLAY'}
+                    </button>
+                    <button 
+                      className={styles.musicBtn} 
+                      onClick={() => {
+                        if (playerRef.current) {
+                          playerRef.current.nextTrack();
+                        }
+                      }}
+                    >
+                      <SkipForward size={14} /> SKIP
+                    </button>
+                  </div>
+                  <button 
+                    className={styles.disconnectSpotifyBtn} 
+                    onClick={async () => {
+                      if (playerRef.current) {
+                        playerRef.current.disconnect();
+                        playerRef.current = null;
+                      }
+                      await fetch('http://127.0.0.1:8080/api/spotify/logout');
+                      setSpotifyConnected(false);
+                      setSpotifySong('Not playing');
+                      setSpotifyPlaying(false);
+                      // Remove script so it can be re-injected
+                      const script = document.getElementById('spotify-player-script');
+                      if (script) script.remove();
+                    }}
+                    style={{ marginTop: '0.75rem', width: '100%', background: 'rgba(255, 60, 60, 0.1)', color: '#ff5555', padding: '8px', borderRadius: '4px', border: '1px solid rgba(255, 60, 60, 0.2)', fontSize: '0.8rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+                  >
+                    <LogOut size={12} /> DISCONNECT
+                  </button>
+                </>
+              )}
             </div>
           </div>
 

@@ -296,25 +296,32 @@
 .sidebarStatCard {
   background: var(--color-surface-elevated);
   border: 1px solid var(--color-border);
-  padding: 12px 8px;
+  padding: 14px 6px;
   border-radius: var(--radius-md);
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   text-align: center;
-  gap: 4px;
+  gap: 6px;
+  min-height: 80px;
 }
 
 .sidebarStatVal {
   font-family: var(--font-display);
-  font-size: 1.6rem; /* 24px height metric value */
+  font-size: 1.4rem; /* Reduced from 1.6rem for professional fitting */
   font-weight: 800;
   color: var(--color-foreground);
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 3px;
 }
 
 .statUnit {
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   color: var(--color-muted);
+  font-weight: 600;
 }
 
 .accuracyBlock {
@@ -485,6 +492,13 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.utilityCard:hover {
+  transform: translateY(-2px);
+  border-color: var(--color-accent);
+  box-shadow: 0 6px 20px var(--color-accent-glow);
 }
 
 .utilityCardHeader {
@@ -512,14 +526,24 @@
   align-items: center;
   font-size: 0.8rem;
   color: var(--color-foreground);
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(250, 177, 98, 0.05);
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.muscleItem:hover {
+  background: rgba(250, 177, 98, 0.05);
+  border-color: rgba(250, 177, 98, 0.15);
 }
 
 .muscleBadge {
   font-size: 0.65rem;
   font-weight: 700;
-  padding: 2px 6px;
+  padding: 3px 8px;
   border-radius: var(--radius-sm);
-  color: var(--color-foreground);
+  text-transform: uppercase;
 }
 
 /* Telemetry settings body */
@@ -532,27 +556,36 @@
 .sensorTelemetryRow {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 6px;
+  gap: 8px;
 }
 
 .sensorItem {
   background: var(--color-surface-elevated);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
-  padding: 6px;
+  padding: 10px 4px;
   text-align: center;
   display: flex;
   flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 56px;
 }
 
 .sensorLabel {
-  font-size: 0.6rem;
+  font-size: 0.62rem;
   color: var(--color-muted);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .sensorVal {
-  font-size: 0.8rem;
-  font-weight: 700;
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--color-foreground);
 }
 
 .miniWaveform {

@@ -31,5 +31,10 @@ export const ENV = {
 
   // Gemini Live
   GEMINI_API_KEY: process.env.GEMINI_API_KEY || '',
-  GEMINI_MODEL: process.env.GEMINI_MODEL || 'models/gemini-3.1-flash-live-preview',
+  GEMINI_MODEL: process.env.GEMINI_MODEL || 'models/gemini-2.0-flash-exp',
+
+  // Spotify API
+  SPOTIFY_CLIENT_ID: process.env.SPOTIFY_CLIENT_ID || '',
+  SPOTIFY_CLIENT_SECRET: process.env.SPOTIFY_CLIENT_SECRET || '',
+  SPOTIFY_REDIRECT_URI: process.env.SPOTIFY_REDIRECT_URI || 'http://127.0.0.1:8080/api/spotify/callback',
 } as const;

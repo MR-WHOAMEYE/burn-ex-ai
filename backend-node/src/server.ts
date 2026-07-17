@@ -24,6 +24,7 @@ import { createSession } from './controllers/sessionController.js';
 import { upsertProfile, getProfile, logWeight } from './controllers/profileController.js';
 import { logWorkout, getWorkoutHistory } from './controllers/workoutController.js';
 import { setupGeminiLiveProxy } from './services/geminiLiveService.js';
+import { spotifyController } from './controllers/spotifyController.js';
 
 async function bootstrap(): Promise<void> {
   // ─── Initialize External Services ─────────────────────────
@@ -68,6 +69,17 @@ async function bootstrap(): Promise<void> {
   app.post('/api/profile/weight', verifyFirebaseToken, logWeight);
   app.post('/api/workouts', verifyFirebaseToken, logWorkout);
   app.get('/api/workouts/history', verifyFirebaseToken, getWorkoutHistory);
+
+  // ─── Spotify API Routes ───────────────────────────────────
+  app.get('/api/spotify/login', spotifyController.login);
+  app.get('/api/spotify/callback', spotifyController.callback as any);
+  app.get('/api/spotify/status', spotifyController.status);
+  app.get('/api/spotify/logout', spotifyController.logout);
+  app.get('/api/spotify/token', spotifyController.token as any);
+  app.get('/api/spotify/player', spotifyController.player as any);
+  app.post('/api/spotify/player/pause', spotifyController.pause as any);
+  app.post('/api/spotify/player/play', spotifyController.play as any);
+  app.post('/api/spotify/player/next', spotifyController.next as any);
 
   // ─── Socket.IO Server ─────────────────────────────────────
   const io = new SocketIOServer(httpServer, {
