@@ -60,34 +60,6 @@ export function TopBar({ displayName, theme, onToggleTheme }: TopBarProps) {
 
   return (
     <header className={styles.topbar}>
-      {/* Welcome Greeting & Active Telemetry Badges */}
-      <div className={styles.leftNavGroup}>
-        <div className={styles.greeting}>
-          <h2 className={styles.welcomeText}>
-            Hello, <span className={styles.name}>{displayName}</span>
-          </h2>
-        </div>
-
-        {/* Telemetry Status Bar (Linear / Vercel style) */}
-        <div className={styles.telemetryBar}>
-          <div className={styles.telemetryItem} title="Active Streak">
-            <Flame size={15} className={styles.streakIcon} />
-            <span>7D Streak</span>
-          </div>
-
-          <div className={styles.telemetryItem} title="Sensor Connection">
-            <Smartphone size={15} className={styles.phoneIcon} />
-            <span className={styles.statusDot} />
-            <span>IMU Paired</span>
-          </div>
-
-          <div className={styles.telemetryItem} title="Session Timer">
-            <Timer size={15} className={styles.timerIcon} />
-            <span>Idle</span>
-          </div>
-        </div>
-      </div>
-
       {/* Search, Quick Action, Theme, Notifications & Profile */}
       <div className={styles.actions}>
         {/* Search */}

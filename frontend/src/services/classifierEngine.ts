@@ -61,7 +61,9 @@ class ClassifierEngine {
           console.log('✅ MoveNet pose detector loaded');
 
           // Load custom Bi-LSTM LayersModel with cache-busting query parameter
-          this.lstmModel = await tf.loadLayersModel('/models/burnex/model.json?v=3');
+          const tempModel = await tf.loadLayersModel('/models/burnex/model.json?v=5');
+          const weightNames = tempModel.weights.map((w: any) => w.name).join(', ');
+          throw new Error('EXPECTED_WEIGHTS: ' + weightNames);
           console.log('✅ Custom B-LSTM LayersModel loaded');
         } catch (error) {
           console.error('❌ Failed to initialize TF.js models:', error);

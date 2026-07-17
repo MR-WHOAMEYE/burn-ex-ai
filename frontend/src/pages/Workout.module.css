@@ -1,16 +1,67 @@
-/* Workout Engine page styles */
+/* Premium AI Workout Studio styles */
 
 .workoutPage {
   padding-top: var(--space-xl);
+  padding-bottom: var(--space-xl);
+  display: flex;
+  flex-direction: column;
+  gap: 32px; /* Whitespace improvements */
 }
 
+/* ─── 1. Workout Header Command Bar ─── */
 .header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: var(--space-xl);
+  margin-bottom: 8px;
   flex-wrap: wrap;
   gap: var(--space-md);
+}
+
+.headerTitleGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.studioTitle {
+  font-family: var(--font-display);
+  font-size: 2rem; /* 32px title */
+  font-weight: 800;
+  color: var(--color-foreground);
+  margin: 0;
+  letter-spacing: 0.05em;
+}
+
+.studioStatusRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.statusDotActive {
+  width: 8px;
+  height: 8px;
+  background-color: var(--color-accent);
+  border-radius: 50%;
+  box-shadow: 0 0 8px var(--color-accent);
+  animation: pulseGlow 2s infinite;
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+}
+
+.statusLabel {
+  font-size: 0.75rem;
+  color: var(--color-muted);
 }
 
 .headerActions {
@@ -24,18 +75,23 @@
   gap: var(--space-sm);
 }
 
-/* Main Grid: Camera left, Metrics right */
+/* ─── 2. Main Grid: Studio Feed left (65%), Coach right (35%) ─── */
 .workoutGrid {
   display: grid;
-  grid-template-columns: 3fr 2fr;
-  gap: var(--space-lg);
+  grid-template-columns: 1.8fr 1fr; /* 65% / 35% approximate split */
+  gap: 24px;
   align-items: start;
+}
+
+@media (max-width: 1024px) {
+  .workoutGrid {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* Camera Panel */
 .cameraPanel {
-  position: sticky;
-  top: calc(var(--topbar-height) + var(--space-lg));
+  position: relative;
 }
 
 .cameraContainer {
@@ -44,15 +100,16 @@
   aspect-ratio: 16 / 9;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
+  border-radius: 24px; /* Curve: Curvy border-radius */
   overflow: hidden;
+  box-shadow: 0 8px 32px rgba(4, 13, 18, 0.4);
 }
 
 .videoFeed {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transform: scaleX(-1); /* Mirror for selfie view */
+  transform: scaleX(-1); /* Mirror selfie view */
 }
 
 .skeletonCanvas {
@@ -62,13 +119,88 @@
   width: 100%;
   height: 100%;
   pointer-events: none;
-  transform: scaleX(-1); /* Match mirrored video */
+  transform: scaleX(-1); /* Mirror sync skeleton */
+  z-index: 5;
 }
 
 .calibrationBadge {
   position: absolute;
-  top: var(--space-md);
-  left: var(--space-md);
+  top: 16px;
+  left: 16px;
+  z-index: 10;
+}
+
+.pulsingBadge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--color-background);
+  background-color: var(--color-accent);
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  box-shadow: 0 0 12px var(--color-accent-glow);
+  text-transform: uppercase;
+}
+
+/* Camera quality / FPS Telemetry HUD inside video frame */
+.videoTelemetryHUD {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  display: flex;
+  gap: 8px;
+  z-index: 10;
+}
+
+.telemetryTag {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--color-foreground);
+  background: rgba(21, 18, 38, 0.75);
+  border: 1px solid var(--color-border);
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+}
+
+/* Diagnostic Console Box inside Video frame */
+.diagnosticConsole {
+  position: absolute;
+  bottom: 16px;
+  left: 16px;
+  background: rgba(21, 18, 38, 0.85);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 12px;
+  width: 320px;
+  max-height: 120px;
+  overflow: hidden;
+  z-index: 10;
+  font-family: monospace;
+}
+
+.consoleHeader {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--color-accent);
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: 4px;
+  margin-bottom: 6px;
+}
+
+.consoleBody {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  overflow-y: auto;
+  max-height: 80px;
+}
+
+.consoleLogLine {
+  font-size: 0.65rem;
+  color: var(--color-foreground);
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
 }
 
 .cameraPlaceholder {
@@ -77,138 +209,468 @@
   align-items: center;
   justify-content: center;
   height: 100%;
-  gap: var(--space-md);
+  gap: 16px;
   color: var(--color-muted);
   text-align: center;
-  padding: var(--space-xl);
+  padding: 32px;
 }
 
 .placeholderIcon {
   color: var(--color-border);
+  opacity: 0.5;
 }
 
-/* Metrics Panel */
-.metricsPanel {
+.placeholderHeading {
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--color-foreground);
+  margin: 0;
+}
+
+.placeholderText {
+  font-size: 0.85rem;
+  max-width: 300px;
+  margin: 0;
+}
+
+/* ─── 3. AI Coach Sidebar Panel ─── */
+.coachSidebar {
   display: flex;
   flex-direction: column;
-  gap: var(--space-md);
+  gap: 24px;
 }
 
-.exerciseCard {
-  text-align: center;
-  padding: var(--space-lg) !important;
-  border-color: var(--color-accent) !important;
-  background: linear-gradient(
-    135deg,
-    var(--color-surface) 0%,
-    rgba(34, 197, 94, 0.05) 100%
-  ) !important;
+.coachCard {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 24px; /* curvier */
+  padding: 24px;
+  height: 100%;
 }
 
-.exerciseLabel {
-  font-size: 0.75rem;
-  color: var(--color-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
+.modelLabel {
+  font-size: 0.65rem;
+  font-weight: 700;
+  background: rgba(242, 89, 18, 0.1);
+  border: 1px solid rgba(242, 89, 18, 0.25);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  color: var(--color-accent);
 }
 
-.exerciseName {
+.coachWidgetContent {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.exerciseNameBlock {
+  border-left: 3px solid var(--color-accent);
+  padding-left: 12px;
+}
+
+.exerciseNameBlock h2 {
+  font-family: var(--font-display);
   font-size: 1.8rem;
-  color: var(--color-accent);
-  margin-top: var(--space-xs);
+  font-weight: 800;
+  color: var(--color-foreground);
+  margin: 4px 0 0 0;
 }
 
-/* Metric Cards */
-.metricsRow {
+.metaLabel {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--color-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.activeStatGrid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--space-md);
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
 }
 
-.metricCard {
+.sidebarStatCard {
+  background: var(--color-surface-elevated);
+  border: 1px solid var(--color-border);
+  padding: 12px 8px;
+  border-radius: var(--radius-md);
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
-  gap: var(--space-xs);
-  padding: var(--space-md) !important;
+  gap: 4px;
 }
 
-.metricIcon {
-  color: var(--color-accent);
+.sidebarStatVal {
+  font-family: var(--font-display);
+  font-size: 1.6rem; /* 24px height metric value */
+  font-weight: 800;
+  color: var(--color-foreground);
 }
 
-/* Gauge Cards */
-.gaugeCard {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-xs);
-  padding: var(--space-md) !important;
-}
-
-.gaugeLabel {
+.statUnit {
   font-size: 0.75rem;
   color: var(--color-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  display: flex;
-  align-items: center;
-  gap: var(--space-xs);
 }
 
-.gaugeBar {
+.accuracyBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.accuracyHeader {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.progressBar {
   width: 100%;
   height: 6px;
-  background: var(--color-surface-elevated);
+  background: rgba(255, 255, 255, 0.05);
   border-radius: var(--radius-full);
   overflow: hidden;
 }
 
-.gaugeFill {
+.progressFill {
   height: 100%;
   border-radius: var(--radius-full);
   transition: width 0.3s ease-out;
 }
 
-.gaugeValue {
-  font-family: var(--font-display);
-  font-size: 1.1rem;
-  font-weight: 700;
+/* Real-time coaching message alert */
+.coachingAlertBanner {
+  background: rgba(242, 89, 18, 0.08);
+  border: 1px solid rgba(242, 89, 18, 0.2);
+  border-radius: var(--radius-md);
+  padding: 14px;
 }
 
-/* Alert Banner */
-.alertBanner {
+.alertHeader {
   display: flex;
   align-items: center;
-  gap: var(--space-sm);
-  padding: var(--space-md);
-  background: rgba(239, 68, 68, 0.1);
-  border: 1px solid var(--color-destructive);
-  border-radius: var(--radius-md);
-  color: var(--color-destructive);
-  font-size: 0.85rem;
-  font-weight: 500;
-  overflow: hidden;
+  gap: 6px;
+  margin-bottom: 6px;
 }
 
-/* Responsive */
-@media (max-width: 1024px) {
-  .workoutGrid {
+.alertHeading {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--color-accent);
+  letter-spacing: 0.04em;
+}
+
+.alertText {
+  font-size: 0.85rem;
+  font-style: italic;
+  line-height: 1.4;
+  color: var(--color-foreground);
+  margin: 0;
+}
+
+/* ─── 4. Workout Analytics Charts Row ─── */
+.analyticsRow {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.sectionHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border-left: 3px solid var(--color-border);
+  padding-left: 12px;
+}
+
+.sectionTitle {
+  font-family: var(--font-display);
+  font-size: 1.4rem; /* 24px Section titles */
+  font-weight: 800;
+  color: var(--color-foreground);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0;
+}
+
+.sectionSubtitle {
+  font-size: 0.85rem;
+  color: var(--color-muted);
+  margin: 0;
+}
+
+.analyticsGrid {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 24px;
+}
+
+@media (max-width: 768px) {
+  .analyticsGrid {
     grid-template-columns: 1fr;
   }
+}
 
-  .cameraPanel {
-    position: static;
+.analyticsCard {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 24px;
+  padding: 24px;
+}
+
+.chartWrapper {
+  margin-top: 16px;
+  width: 100%;
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.cardTitle {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--color-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.badgeSuccess {
+  font-size: 0.65rem;
+  font-weight: 700;
+  background: rgba(242, 89, 18, 0.1);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  color: var(--color-accent);
+}
+
+/* ─── 5. Bottom Command Utilities ─── */
+.utilitiesRow {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.utilitiesGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+
+@media (max-width: 1024px) {
+  .utilitiesGrid {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 
 @media (max-width: 640px) {
-  .metricsRow {
+  .utilitiesGrid {
     grid-template-columns: 1fr;
   }
+}
 
-  .headerActions {
-    flex-direction: column;
-    align-items: stretch;
-  }
+.utilityCard {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.utilityCardHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: 8px;
+}
+
+/* Muscle Heatmap Body */
+.heatmapBody {
+  width: 100%;
+}
+
+.muscleList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.muscleItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.8rem;
+  color: var(--color-foreground);
+}
+
+.muscleBadge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  color: var(--color-foreground);
+}
+
+/* Telemetry settings body */
+.sensorBody {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sensorTelemetryRow {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+
+.sensorItem {
+  background: var(--color-surface-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 6px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+}
+
+.sensorLabel {
+  font-size: 0.6rem;
+  color: var(--color-muted);
+}
+
+.sensorVal {
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.miniWaveform {
+  border: 1px solid var(--color-border);
+  background: rgba(21, 18, 38, 0.4);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.syncBtn {
+  background: none;
+  border: none;
+  color: var(--color-accent);
+  cursor: pointer;
+  font-weight: 700;
+  padding: 0;
+}
+
+/* Timeline body */
+.timelineBody {
+  width: 100%;
+}
+
+.timelinePhases {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.phaseStep {
+  transition: all 0.2s ease;
+}
+
+/* Hydration reminder */
+.hydrationBody {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.hydrationMeta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+}
+
+.hydrationAddBtn {
+  background: var(--color-accent);
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--color-background);
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px 6px;
+}
+
+.waterTrackerGrid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 4px;
+}
+
+.waterGlassDot {
+  aspect-ratio: 1;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--color-border);
+  border-radius: 50%;
+}
+
+.glassFilled {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  box-shadow: 0 0 6px var(--color-accent-glow);
+}
+
+/* Music body */
+.musicBody {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.musicControlsRow {
+  display: flex;
+  gap: 8px;
+}
+
+.musicBtn {
+  flex: 1;
+  background: var(--color-surface-elevated);
+  border: 1px solid var(--color-border);
+  color: var(--color-foreground);
+  font-size: 0.7rem;
+  font-weight: 700;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  padding: 4px 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+/* Voice helper body */
+.voiceBody {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.voiceToggleBtn {
+  background: none;
+  border: none;
+  color: var(--color-accent);
+  cursor: pointer;
+  font-weight: 700;
+  padding: 0;
 }
