@@ -4,7 +4,7 @@
  * Designed under senior product guidelines from WHOOP, Oura Ring, Garmin, and Tesla.
  * Strict color theme compliance: `#37353E` (background), `#44444E` (surface), `#715A5A` (border), `#D3DAD9` (accent).
  */
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   AreaChart,
@@ -173,13 +173,22 @@ export function AnalyticsPage() {
 
   const radarData = getRadarData();
 
-  // ─── Dynamic Heatmap Data ───
-  const HEATMAP_DATA = Array.from({ length: 28 }, (_, i) => ({
-    day: i + 1,
-    calories: Math.round((Math.random() * 400 + 150) * filterFactor),
-    duration: Math.round((Math.random() * 30 + 15) * filterFactor),
-    consistency: Math.round(Math.random() * 15 + 85),
-  }));
+  // ─── Dynamic Heatmap Data (useMemo stops blinking) ───
+  const HEATMAP_DATA = useMemo(() => {
+    return Array.from({ length: 28 }, (_, i) => {
+      // Deterministic values based on index 'i' to prevent rendering jitter
+      const pseudoRandomCal = ((i * 17) % 300) + 200; // range 200-500
+      const pseudoRandomDur = ((i * 7) % 25) + 15;    // range 15-40
+      const pseudoRandomCons = ((i * 13) % 15) + 85;  // range 85-100
+
+      return {
+        day: i + 1,
+        calories: Math.round(pseudoRandomCal * filterFactor),
+        duration: Math.round(pseudoRandomDur * filterFactor),
+        consistency: Math.round(pseudoRandomCons),
+      };
+    });
+  }, [filterFactor]);
 
   // ─── Dynamic KPI Definitions ───
   const kpis: KpiData[] = [
