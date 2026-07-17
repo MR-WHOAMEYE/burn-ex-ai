@@ -1,8 +1,9 @@
 /**
  * Premium AI Nutrition Intelligence Hub Page — Burn-Ex AI
  * 
- * Redesigned according to Apple Health, Lifesum, and WHOOP principles.
- * Built strictly on Slate-Charcoal, Rose-Brown, and Sage-Grey palette rules.
+ * Refactored into a spacious 2-column layout to provide maximum breathing room, 
+ * matching Apple Health, Lifesum, and Vercel design principles.
+ * Built strictly on Slate-Charcoal (#37353E background, #44444E surface, #715A5A borders, #D3DAD9 accents) theme.
  */
 import { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -130,8 +131,8 @@ export function NutritionPage() {
     setIsUploading(true);
     setScanResult(null);
     
-    // Simulate complex AI analysis pipeline (YOLOv8 + GPT-4o Vision API translation)
-    await new Promise((resolve) => setTimeout(resolve, 2500));
+    // Simulate AI image label translation
+    await new Promise((resolve) => setTimeout(resolve, 2000));
     
     setScanResult({
       detectedFoods: ['Sourdough Avocado Toast', 'Poached Free-Range Egg', 'Cherry Tomatoes'],
@@ -192,8 +193,8 @@ export function NutritionPage() {
     setIsGeneratingRecipe(true);
     setGeneratedRecipe(null);
     
-    // Simulate AI LLM recipe synthesizer
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    // Simulate LLM Synthesizer
+    await new Promise(resolve => setTimeout(resolve, 1800));
     
     setGeneratedRecipe({
       title: 'Skillet Garlic Herb Chicken with Quinoa',
@@ -212,39 +213,40 @@ export function NutritionPage() {
 
   return (
     <div className={styles.nutritionPage}>
-      {/* HEADER */}
+      {/* HEADER SECTION */}
       <div className={styles.header}>
-        <div>
-          <h1 className={styles.title}>AI Nutrition Intelligence</h1>
-          <p className={styles.subtitle}>Immersive real-time metabolic diagnostics & macronutrient engine</p>
-        </div>
+        <h1 className={styles.title}>AI Nutrition Intelligence</h1>
+        <p className={styles.subtitle}>Immersive real-time metabolic diagnostics & macronutrient engine</p>
       </div>
 
-      {/* HERO SECTION CONTAINER */}
+      {/* HERO BANNER - TALLER & 2-COLUMN STRUCTURE */}
       <div className={styles.heroSection}>
         <div className={styles.heroGrid}>
-          {/* Card 1: Today's Health Score & Intake */}
-          <div className={styles.heroScoreCard}>
-            <div className={styles.scoreTitleHeader}>
-              <h2 className={styles.cardHeaderTitle}>Today's Status</h2>
-              <span className={styles.pillBadge}>Live Telemetry</span>
+          {/* Left Block: Combined Health Score, Calories & Macro Indicators */}
+          <div className={styles.heroMainCard}>
+            <div className={styles.heroScoreHeader}>
+              <div>
+                <h2 className={styles.cardHeaderTitle}>Today's Nutrition Diagnostics</h2>
+                <p className={styles.cardHeaderSubtitle}>Real-time telemetry and metabolic tracking</p>
+              </div>
+              <span className={styles.pillBadge}>Live Syncing</span>
             </div>
             
-            <div className={styles.scoreRow}>
-              {/* Progress Ring */}
+            <div className={styles.heroBodyRow}>
+              {/* Progress Ring block */}
               <div className={styles.scoreRingContainer}>
                 <svg viewBox="0 0 120 120" className={styles.ringSvg}>
                   <circle
                     cx="60" cy="60" r="50"
                     fill="none"
-                    stroke="rgba(255, 255, 255, 0.05)"
-                    strokeWidth="8"
+                    stroke="rgba(255, 255, 255, 0.04)"
+                    strokeWidth="7"
                   />
                   <circle
                     cx="60" cy="60" r="50"
                     fill="none"
                     stroke="var(--color-accent)"
-                    strokeWidth="8"
+                    strokeWidth="7"
                     strokeLinecap="round"
                     strokeDasharray={`${(nutritionScore / 100) * 314} 314`}
                     transform="rotate(-90 60 60)"
@@ -253,58 +255,48 @@ export function NutritionPage() {
                 </svg>
                 <div className={styles.ringCenterText}>
                   <span className={styles.scoreValue}>{nutritionScore}</span>
-                  <span className={styles.scoreLabel}>Health score</span>
+                  <span className={styles.scoreLabel}>Health Score</span>
                 </div>
               </div>
 
-              {/* Calories Overview */}
+              {/* Calories diagnostics */}
               <div className={styles.caloriesIntakeDetails}>
-                <div className={styles.intakeItem}>
-                  <span className={styles.intakeLabel}>Calories Registered</span>
-                  <span className={styles.intakeVal}>{dailyCalories.current} kcal</span>
+                <div className={styles.calorieItemRow}>
+                  <div className={styles.intakeItem}>
+                    <span className={styles.intakeLabel}>Calories Registered</span>
+                    <span className={styles.intakeVal}>{dailyCalories.current} kcal</span>
+                  </div>
+                  <div className={styles.intakeItem}>
+                    <span className={styles.intakeLabel}>Target Intake Goal</span>
+                    <span className={styles.intakeVal}>{dailyCalories.target} kcal</span>
+                  </div>
                 </div>
-                <div className={styles.intakeDivider} />
-                <div className={styles.intakeItem}>
-                  <span className={styles.intakeLabel}>Target Intake Goal</span>
-                  <span className={styles.intakeVal}>{dailyCalories.target} kcal</span>
+                
+                {/* Macro progress meters */}
+                <div className={styles.macroPillsList}>
+                  {macros.map(m => (
+                    <div key={m.label} className={styles.macroPill}>
+                      <div className={styles.pillLabels}>
+                        <span className={styles.pillName}>{m.label}</span>
+                        <span className={styles.pillVals}>{m.current}g / {m.target}g</span>
+                      </div>
+                      <div className={styles.pillTrack}>
+                        <div 
+                          className={styles.pillBarFill} 
+                          style={{ 
+                            background: m.color,
+                            width: `${Math.min((m.current / m.target) * 100, 100)}%` 
+                          }} 
+                        />
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Card 2: AI Daily Recommendation and Insights */}
-          <div className={styles.heroInsightCard}>
-            <div className={styles.insightHeader}>
-              <Sparkles size={16} className={styles.sparkleIcon} />
-              <h2 className={styles.cardHeaderTitle}>AI Nutrition Coach Insights</h2>
-            </div>
-            <p className={styles.coachText}>
-              "Your protein absorption is currently optimal at <strong>95g</strong>. However, hydration levels are running low for your workout load. Recommend drinking <strong>3 more glasses</strong> of water prior to your evening training. Include potassium-rich foods to prevent lactic cramps."
-            </p>
-            
-            {/* Macro preview meters */}
-            <div className={styles.macroPillsList}>
-              {macros.map(m => (
-                <div key={m.label} className={styles.macroPill}>
-                  <div className={styles.pillLabels}>
-                    <span className={styles.pillName}>{m.label}</span>
-                    <span className={styles.pillVals}>{m.current}g / {m.target}g</span>
-                  </div>
-                  <div className={styles.pillTrack}>
-                    <div 
-                      className={styles.pillBarFill} 
-                      style={{ 
-                        background: m.color,
-                        width: `${Math.min((m.current / m.target) * 100, 100)}%` 
-                      }} 
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Card 3: AI Meal Scanner Drag & Drop Area */}
+          {/* Right Block: Spacious AI Meal Scanner Card */}
           <div 
             className={`${styles.heroScannerCard} ${dragActive ? styles.dragActive : ''}`}
             onDragEnter={handleDrag}
@@ -312,17 +304,20 @@ export function NutritionPage() {
             onDragLeave={handleDrag}
             onDrop={handleDrop}
           >
-            <div className={styles.scannerHeader}>
-              <Camera size={18} className={styles.cameraIcon} />
-              <h2 className={styles.cardHeaderTitle}>AI Meal Scanner</h2>
+            <div className={styles.scannerTitleHeader}>
+              <div className={styles.scannerHeader}>
+                <Camera size={18} className={styles.cameraIcon} />
+                <h2 className={styles.cardHeaderTitle}>AI Meal Scanner</h2>
+              </div>
+              <span className={styles.scannerBadge}>Instant Upload</span>
             </div>
             
             <div className={styles.dropZoneArea} onClick={handlePhotoUpload}>
-              <Upload size={28} className={styles.uploadIcon} />
+              <Upload size={32} className={styles.uploadIcon} />
               <p className={styles.dropText}>
-                <strong>Drag & Drop</strong> food image here, or <span>browse local files</span>
+                <strong>Drag & Drop</strong> food photo here, or <span>browse local files</span>
               </p>
-              <span className={styles.captureHint}>Supports instant mobile camera scans</span>
+              <span className={styles.captureHint}>Supports JPEG, PNG & mobile camera triggers</span>
             </div>
 
             <input
@@ -337,24 +332,24 @@ export function NutritionPage() {
         </div>
       </div>
 
-      {/* main grid layouts */}
+      {/* MAIN TWO-COLUMN RESPONSIVE LAYOUT */}
       <div className={styles.mainGrid}>
         
-        {/* LEFT COLUMN: MEAL SCANNER RESULTS & TIMELINE */}
+        {/* LEFT COLUMN: Trackers, Timeline & Heatmaps */}
         <div className={styles.leftCol}>
           
-          {/* Analyze Upload State */}
+          {/* Real-time image analyzer dialog */}
           <AnimatePresence mode="wait">
             {isUploading && (
               <motion.div
                 className={styles.analyzingCard}
-                initial={{ opacity: 0, y: 10 }}
+                initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
+                exit={{ opacity: 0, y: -12 }}
               >
-                <Loader2 className={styles.spinnerIcon} size={24} />
-                <h3>Analyzing Meal Texture & Composition...</h3>
-                <p>Synthesizing nutritional labels using YOLOv8 vision diagnostics</p>
+                <Loader2 className={styles.spinnerIcon} size={28} />
+                <h3>Analyzing Meal Nutrition Data...</h3>
+                <p>Decoding nutrient layers and portion sizes using computer vision...</p>
               </motion.div>
             )}
 
@@ -367,13 +362,13 @@ export function NutritionPage() {
               >
                 <div className={styles.resultHeader}>
                   <div>
-                    <h3 className={styles.resultMainTitle}>Scan Results</h3>
+                    <h3 className={styles.resultMainTitle}>Meal Diagnostics Scan Report</h3>
                     <span className={styles.confidenceScore}>
-                      Confidence: <strong>{scanResult.confidence}%</strong>
+                      YOLOv8 Detection Confidence: <strong>{scanResult.confidence}%</strong>
                     </span>
                   </div>
                   <div className={styles.healthScoreBadge}>
-                    <span>Health Score</span>
+                    <span>Health Rating</span>
                     <strong>{scanResult.healthScore}</strong>
                   </div>
                 </div>
@@ -387,7 +382,7 @@ export function NutritionPage() {
                 {/* Macro summary details */}
                 <div className={styles.scannedBreakdown}>
                   <div className={styles.scannedMacroItem}>
-                    <span>Calories</span>
+                    <span>Energy</span>
                     <strong>{scanResult.cal} kcal</strong>
                   </div>
                   <div className={styles.scannedMacroItem}>
@@ -395,32 +390,32 @@ export function NutritionPage() {
                     <strong>{scanResult.protein}g</strong>
                   </div>
                   <div className={styles.scannedMacroItem}>
-                    <span>Carbs</span>
+                    <span>Carbohydrates</span>
                     <strong>{scanResult.carbs}g</strong>
                   </div>
                   <div className={styles.scannedMacroItem}>
-                    <span>Fat</span>
+                    <span>Fats</span>
                     <strong>{scanResult.fats}g</strong>
                   </div>
                 </div>
 
                 <div className={styles.scannedMicrosGrid}>
-                  <div className={styles.microTag}>Fiber: {scanResult.fiber}g</div>
-                  <div className={styles.microTag}>Sugar: {scanResult.sugar}g</div>
-                  <div className={styles.microTag}>Sodium: {scanResult.sodium}mg</div>
+                  <div className={styles.microTag}>Dietary Fiber: {scanResult.fiber}g</div>
+                  <div className={styles.microTag}>Total Sugar: {scanResult.sugar}g</div>
+                  <div className={styles.microTag}>Sodium Count: {scanResult.sodium}mg</div>
                 </div>
 
                 <div className={styles.suggestionAlertBox}>
-                  <Sparkles size={14} className={styles.suggestionSparkle} />
+                  <Sparkles size={16} className={styles.suggestionSparkle} />
                   <p>{scanResult.suggestions}</p>
                 </div>
 
                 <div className={styles.resultButtons}>
                   <button className="btn btn-primary" onClick={addScannedMeal}>
-                    Log Meal to Timeline
+                    Add to Meal Timeline
                   </button>
                   <button className="btn btn-outline" onClick={() => setScanResult(null)}>
-                    Discard
+                    Discard Scan
                   </button>
                 </div>
               </motion.div>
@@ -430,9 +425,13 @@ export function NutritionPage() {
           {/* Meal Timeline */}
           <div className={`card ${styles.timelineCard}`}>
             <div className={styles.cardHeaderRow}>
-              <h3 className={styles.cardSectionTitle}>
-                <Clock size={16} /> Meal Timeline
-              </h3>
+              <div>
+                <h3 className={styles.cardSectionTitle}>
+                  <Clock size={16} /> Meal Timeline
+                </h3>
+                <p className={styles.cardSectionSubtitle}>Logged meals and nutrient intakes logged today</p>
+              </div>
+              
               <div className={styles.searchBox}>
                 <Search size={14} className={styles.searchIcon} />
                 <input
@@ -456,9 +455,9 @@ export function NutritionPage() {
                     <div className={styles.timelineItemContent}>
                       <span className={styles.foodTitle}>{m.name}</span>
                       <div className={styles.timelineMacros}>
-                        <span>Protein: {m.protein}g</span>
-                        <span>Carbs: {m.carbs}g</span>
-                        <span>Fats: {m.fats}g</span>
+                        <span>Protein: <strong>{m.protein}g</strong></span>
+                        <span>Carbs: <strong>{m.carbs}g</strong></span>
+                        <span>Fats: <strong>{m.fats}g</strong></span>
                       </div>
                     </div>
                     <span className={styles.timelineKcal}>{m.cal} kcal</span>
@@ -467,183 +466,156 @@ export function NutritionPage() {
             </div>
           </div>
 
-          {/* Nutrition Achievements */}
+          {/* Compliance Heatmap */}
+          <div className={`card ${styles.heatmapCard}`}>
+            <div className={styles.cardHeaderRow}>
+              <div>
+                <h3 className={styles.cardSectionTitle}>Weekly Nutrition Compliance Heatmap</h3>
+                <p className={styles.cardSectionSubtitle}>Visual compliance scores mapping caloric goals</p>
+              </div>
+              <span className={styles.complianceRate}>Avg 94% Compliance Rate</span>
+            </div>
+
+            {/* SVG Grid */}
+            <div className={styles.heatmapWrapper}>
+              {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, dayIdx) => (
+                <div key={day} className={styles.heatmapRow}>
+                  <span className={styles.dayLabel}>{day}</span>
+                  {Array.from({ length: 4 }).map((_, weekIdx) => {
+                    const idx = dayIdx + weekIdx * 7;
+                    const scores = [92, 95, 88, 74, 98, 91, 85, 96, 94, 90, 82, 99, 93, 86, 91, 95, 78, 89, 94, 97, 88, 92, 96, 75, 84, 91, 98, 93];
+                    const currentScore = scores[idx % scores.length];
+                    
+                    let fill = 'rgba(211, 218, 217, 0.05)';
+                    if (currentScore >= 95) fill = '#D3DAD9';
+                    else if (currentScore >= 90) fill = 'rgba(211, 218, 217, 0.7)';
+                    else if (currentScore >= 80) fill = 'rgba(211, 218, 217, 0.4)';
+                    else fill = 'rgba(113, 90, 90, 0.5)';
+
+                    return (
+                      <div 
+                        key={weekIdx} 
+                        className={styles.heatmapDay} 
+                        style={{ background: fill }}
+                        title={`${day} Week ${weekIdx + 1}: ${currentScore}% Compliance`}
+                      />
+                    );
+                  })}
+                </div>
+              ))}
+            </div>
+            
+            <div className={styles.heatmapLegend}>
+              <span>Low Compliance</span>
+              <div className={styles.legendBars}>
+                <div style={{ background: 'rgba(113, 90, 90, 0.5)', width: 14, height: 14, borderRadius: 3 }} />
+                <div style={{ background: 'rgba(211, 218, 217, 0.4)', width: 14, height: 14, borderRadius: 3 }} />
+                <div style={{ background: 'rgba(211, 218, 217, 0.7)', width: 14, height: 14, borderRadius: 3 }} />
+                <div style={{ background: '#D3DAD9', width: 14, height: 14, borderRadius: 3 }} />
+              </div>
+              <span>Optimal Target Met</span>
+            </div>
+          </div>
+
+          {/* Sub-grid: Micronutrients & Weekly Averages side-by-side */}
+          <div className={styles.subGridRow}>
+            {/* Micronutrient card */}
+            <div className={`card ${styles.microCard}`}>
+              <h3 className={styles.cardSectionTitle}>
+                <Target size={16} /> Daily Micronutrients
+              </h3>
+              
+              <div className={styles.micronutrientsList}>
+                <div className={styles.microItem}>
+                  <div className={styles.microHeader}>
+                    <span>Sodium</span>
+                    <span>780mg / 1500mg</span>
+                  </div>
+                  <div className={styles.microBar}>
+                    <div className={styles.microFill} style={{ width: '52%', background: 'var(--color-border)' }} />
+                  </div>
+                </div>
+
+                <div className={styles.microItem}>
+                  <div className={styles.microHeader}>
+                    <span>Dietary Fiber</span>
+                    <span>22g / 30g</span>
+                  </div>
+                  <div className={styles.microBar}>
+                    <div className={styles.microFill} style={{ width: '73%', background: 'var(--color-accent)' }} />
+                  </div>
+                </div>
+
+                <div className={styles.microItem}>
+                  <div className={styles.microHeader}>
+                    <span>Sugar Intake</span>
+                    <span>18g / 50g</span>
+                  </div>
+                  <div className={styles.microBar}>
+                    <div className={styles.microFill} style={{ width: '36%', background: 'var(--color-accent)' }} />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Weekly averages card */}
+            <div className={`card ${styles.weeklyTrendCard}`}>
+              <div className={styles.trendHeader}>
+                <TrendingUp size={16} />
+                <h3 className={styles.cardSectionTitle}>Weekly Kcal Averages</h3>
+              </div>
+              
+              <div className={styles.trendChart}>
+                <svg viewBox="0 0 100 35" className={styles.trendSvg}>
+                  <defs>
+                    <linearGradient id="trendGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="var(--color-accent)" stopOpacity="0.2"/>
+                      <stop offset="100%" stopColor="var(--color-accent)" stopOpacity="0"/>
+                    </linearGradient>
+                  </defs>
+                  <path d="M0,28 Q15,10 30,22 T60,8 T90,14" fill="none" stroke="var(--color-accent)" strokeWidth="1.5" />
+                  <path d="M0,28 Q15,10 30,22 T60,8 T90,14 L100,35 L0,35 Z" fill="url(#trendGrad)" />
+                </svg>
+              </div>
+              <span className={styles.trendAverageLabel}>Average weekly burn: 1,980 kcal</span>
+            </div>
+          </div>
+
+          {/* Achievements list */}
           <div className={`card ${styles.achievementsCard}`}>
             <h3 className={styles.cardSectionTitle}>
               <Award size={16} /> Achievements & Milestones
             </h3>
-            <div className={styles.achievementsGrid}>
+            
+            <div className={styles.achievementsGridRow}>
               <div className={styles.achievementBadge}>
                 <div className={styles.badgeIconWrapper}>
                   <Droplets size={16} />
                 </div>
                 <div>
-                  <h4>Hydration Streak</h4>
-                  <p>Met water goals 5 days in a row</p>
+                  <h4>Hydration Hero</h4>
+                  <p>Met water intake targets 5 days in a row</p>
                 </div>
               </div>
+              
               <div className={styles.achievementBadge}>
                 <div className={styles.badgeIconWrapper}>
                   <Apple size={16} />
                 </div>
                 <div>
-                  <h4>Clean Plate Club</h4>
-                  <p>Over 90% health scores this week</p>
+                  <h4>Clean Eating Streak</h4>
+                  <p>Over 90% health scores tracked this week</p>
                 </div>
               </div>
             </div>
           </div>
+
         </div>
 
-        {/* MIDDLE COLUMN: INTEL SUMMARY & HEATMAPS */}
-        <div className={styles.middleCol}>
-          
-          {/* Heatmap Section */}
-          <div className={`card ${styles.heatmapCard}`}>
-            <div className={styles.cardHeaderRow}>
-              <div>
-                <h3 className={styles.cardSectionTitle}>Weekly Nutrition Heatmap</h3>
-                <p className={styles.cardSectionSubtitle}>Visual compliance scores mapping</p>
-              </div>
-              <span className={styles.complianceRate}>Avg 94% compliance</span>
-            </div>
-
-            {/* SVG Grid */}
-            <div className={styles.heatmapWrapper}>
-              <div className={styles.heatmapHeaderLabel}>
-                <span>Mon</span>
-                <span>Tue</span>
-                <span>Wed</span>
-                <span>Thu</span>
-                <span>Fri</span>
-                <span>Sat</span>
-                <span>Sun</span>
-              </div>
-              <div className={styles.heatmapGrid}>
-                {/* Visual grid arrays */}
-                {Array.from({ length: 28 }, (_, idx) => {
-                  const scores = [92, 95, 88, 74, 98, 91, 85, 96, 94, 90, 82, 99, 93, 86, 91, 95, 78, 89, 94, 97, 88, 92, 96, 75, 84, 91, 98, 93];
-                  const currentScore = scores[idx % scores.length];
-                  
-                  // Color codes strictly mapping our Sage-Grey accents
-                  let fill = 'rgba(211, 218, 217, 0.05)';
-                  if (currentScore >= 95) fill = '#D3DAD9';
-                  else if (currentScore >= 90) fill = 'rgba(211, 218, 217, 0.7)';
-                  else if (currentScore >= 80) fill = 'rgba(211, 218, 217, 0.4)';
-                  else fill = 'rgba(113, 90, 90, 0.5)'; // Muted rose alerts
-
-                  return (
-                    <div 
-                      key={idx} 
-                      className={styles.heatmapDay} 
-                      style={{ background: fill }}
-                      title={`Compliance: ${currentScore}%`}
-                    />
-                  );
-                })}
-              </div>
-            </div>
-            <div className={styles.heatmapLegend}>
-              <span>Low Compliance</span>
-              <div className={styles.legendBars}>
-                <div style={{ background: 'rgba(113, 90, 90, 0.5)', width: 12, height: 12, borderRadius: 2 }} />
-                <div style={{ background: 'rgba(211, 218, 217, 0.4)', width: 12, height: 12, borderRadius: 2 }} />
-                <div style={{ background: 'rgba(211, 218, 217, 0.7)', width: 12, height: 12, borderRadius: 2 }} />
-                <div style={{ background: '#D3DAD9', width: 12, height: 12, borderRadius: 2 }} />
-              </div>
-              <span>Optimal</span>
-            </div>
-          </div>
-
-          {/* Hydration Tracker */}
-          <div className={`card ${styles.hydrationCard}`}>
-            <h3 className={styles.cardSectionTitle}>
-              <Droplets size={16} /> Hydration Diagnostics
-            </h3>
-            <div className={styles.waterGrid}>
-              {Array.from({ length: 8 }, (_, i) => (
-                <button
-                  key={i}
-                  className={`${styles.waterGlass} ${i < waterGlasses ? styles.waterFilled : ''}`}
-                  onClick={() => setWaterGlasses(i + 1)}
-                  aria-label={`Glass ${i + 1}`}
-                >
-                  <Droplet size={22} />
-                </button>
-              ))}
-            </div>
-            <div className={styles.hydrationFooter}>
-              <span>Daily Target Met: <strong>{((waterGlasses / 8) * 100).toFixed(0)}%</strong></span>
-              <span>{waterGlasses} / 8 Glasses</span>
-            </div>
-          </div>
-
-          {/* Micronutrient Summary */}
-          <div className={`card ${styles.microCard}`}>
-            <h3 className={styles.cardSectionTitle}>
-              <Target size={16} /> Daily Micronutrient Balance
-            </h3>
-            
-            <div className={styles.micronutrientsList}>
-              <div className={styles.microItem}>
-                <div className={styles.microHeader}>
-                  <span>Sodium</span>
-                  <span>780mg / 1500mg</span>
-                </div>
-                <div className={styles.microBar}>
-                  <div className={styles.microFill} style={{ width: '52%', background: 'var(--color-border)' }} />
-                </div>
-              </div>
-
-              <div className={styles.microItem}>
-                <div className={styles.microHeader}>
-                  <span>Fiber</span>
-                  <span>22g / 30g</span>
-                </div>
-                <div className={styles.microBar}>
-                  <div className={styles.microFill} style={{ width: '73%', background: 'var(--color-accent)' }} />
-                </div>
-              </div>
-
-              <div className={styles.microItem}>
-                <div className={styles.microHeader}>
-                  <span>Sugar</span>
-                  <span>18g / 50g</span>
-                </div>
-                <div className={styles.microBar}>
-                  <div className={styles.microFill} style={{ width: '36%', background: 'var(--color-accent)' }} />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Weekly Trend */}
-          <div className={`card ${styles.weeklyTrendCard}`}>
-            <div className={styles.trendHeader}>
-              <TrendingUp size={16} />
-              <h3 className={styles.cardSectionTitle}>Weekly Kcal Averages</h3>
-            </div>
-            <div className={styles.trendChart}>
-              {/* Dynamic SVG Mini-graph */}
-              <svg viewBox="0 0 100 35" className={styles.trendSvg}>
-                <defs>
-                  <linearGradient id="trendGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="var(--color-accent)" stopOpacity="0.2"/>
-                    <stop offset="100%" stopColor="var(--color-accent)" stopOpacity="0"/>
-                  </linearGradient>
-                </defs>
-                <path d="M0,28 Q15,10 30,22 T60,8 T90,14" fill="none" stroke="var(--color-accent)" strokeWidth="1.5" />
-                <path d="M0,28 Q15,10 30,22 T60,8 T90,14 L100,35 L0,35 Z" fill="url(#trendGrad)" />
-              </svg>
-            </div>
-            <span className={styles.trendAverageLabel}>Average weekly burn: 1,980 kcal</span>
-          </div>
-        </div>
-
-        {/* RIGHT COLUMN: AI COACH, GROCERY & RECIPES */}
+        {/* RIGHT COLUMN: AI Advisory & Actions */}
         <div className={styles.rightCol}>
           
-          {/* AI Nutrition Coach Alerts */}
+          {/* AI Coach Alerts */}
           <div className={`card ${styles.coachPanelCard}`}>
             <h3 className={styles.cardSectionTitle}>
               <Sparkles size={16} /> AI Coach Advisory
@@ -668,32 +640,59 @@ export function NutritionPage() {
             </div>
           </div>
 
-          {/* AI Recipe Generator Form */}
+          {/* Hydration tracker */}
+          <div className={`card ${styles.hydrationCard}`}>
+            <h3 className={styles.cardSectionTitle}>
+              <Droplets size={16} /> Hydration Diagnostics
+            </h3>
+            
+            <div className={styles.waterGrid}>
+              {Array.from({ length: 8 }, (_, i) => (
+                <button
+                  key={i}
+                  className={`${styles.waterGlass} ${i < waterGlasses ? styles.waterFilled : ''}`}
+                  onClick={() => setWaterGlasses(i + 1)}
+                  aria-label={`Glass ${i + 1}`}
+                >
+                  <Droplet size={20} />
+                </button>
+              ))}
+            </div>
+            
+            <div className={styles.hydrationFooter}>
+              <span>Daily Target Met: <strong>{((waterGlasses / 8) * 100).toFixed(0)}%</strong></span>
+              <span>{waterGlasses} / 8 Glasses</span>
+            </div>
+          </div>
+
+          {/* AI Recipe Generator Form - Spacious vertically stacked inputs */}
           <div className={`card ${styles.recipeGeneratorCard}`}>
             <h3 className={styles.cardSectionTitle}>
               <BookOpen size={16} /> AI Recipe Generator
             </h3>
             <p className={styles.recipeSubtitle}>Input ingredients on hand, synthesize customized plans</p>
             
-            <div className={styles.recipeForm}>
+            <div className={styles.recipeFormStacked}>
               <input
                 type="text"
-                placeholder="Ingredients (e.g. Chicken, Broccoli, Brown Rice)"
+                placeholder="Ingredients (e.g. Salmon, Broccoli, Quinoa)"
                 value={recipeIngredients}
                 onChange={e => setRecipeIngredients(e.target.value)}
+                className={styles.recipeInput}
               />
               <button 
                 className="btn btn-primary"
                 onClick={triggerRecipeGenerator}
                 disabled={isGeneratingRecipe || !recipeIngredients.trim()}
+                style={{ width: '100%', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
               >
                 {isGeneratingRecipe ? (
                   <>
-                    <Loader2 size={14} className={styles.spinner} />
-                    Synthesizing...
+                    <Loader2 size={16} className={styles.spinner} style={{ marginRight: '8px' }} />
+                    Synthesizing Recipe...
                   </>
                 ) : (
-                  'Generate Plan'
+                  'Generate Recipe Plan'
                 )}
               </button>
             </div>
@@ -763,11 +762,12 @@ export function NutritionPage() {
             </div>
           </div>
 
-          {/* Healthy Restaurant Recommendations */}
+          {/* Healthy Restaurant Guide */}
           <div className={`card ${styles.restaurantsCard}`}>
             <h3 className={styles.cardSectionTitle}>
               <Compass size={16} /> AI Restaurant Guide
             </h3>
+            
             <div className={styles.restaurantsList}>
               <div className={styles.restaurantItem}>
                 <div className={styles.restaurantMain}>
@@ -776,6 +776,7 @@ export function NutritionPage() {
                 </div>
                 <ChevronRight size={14} className={styles.arrowIcon} />
               </div>
+              
               <div className={styles.restaurantItem}>
                 <div className={styles.restaurantMain}>
                   <h4>The Salad Project</h4>
