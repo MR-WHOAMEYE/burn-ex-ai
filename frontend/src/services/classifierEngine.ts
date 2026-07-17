@@ -158,7 +158,7 @@ class ClassifierEngine {
           // Load custom Bi-LSTM LayersModel with cache-busting query parameter.
           // strict:false allows best-effort weight loading — tolerates Keras 3/TF.js
           // naming differences (lstm_cell/ prefix vs flat kernel paths).
-          this.lstmModel = await tf.loadLayersModel('/models/burnex/model.json?v=4', {
+          this.lstmModel = await tf.loadLayersModel('/models/burnex/model.json?v=5', {
             strict: false,
           });
           console.log('✅ Custom B-LSTM LayersModel loaded');

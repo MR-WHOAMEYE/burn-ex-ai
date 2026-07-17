@@ -14,26 +14,26 @@
 
 /* ─── Design Tokens (CSS Custom Properties) ────────────────── */
 :root {
-  /* Core palette */
-  --color-background: #020617;
-  --color-surface: #0F172A;
-  --color-surface-elevated: #1E293B;
-  --color-border: #334155;
+  /* Core palette (Slate-Charcoal, Rose-Brown, and Sage-Grey Theme) */
+  --color-background: #37353E;
+  --color-surface: #44444E;
+  --color-surface-elevated: #52525D;
+  --color-border: #715A5A;
 
   /* Text */
-  --color-foreground: #F8FAFC;
-  --color-muted: #94A3B8;
+  --color-foreground: #FFFFFF;
+  --color-muted: #A0A6A5;
 
   /* Accent */
-  --color-accent: #22C55E;
-  --color-accent-hover: #16A34A;
-  --color-accent-glow: rgba(34, 197, 94, 0.15);
+  --color-accent: #D3DAD9;
+  --color-accent-hover: #E2E8E7;
+  --color-accent-glow: rgba(211, 218, 217, 0.15);
 
   /* Status */
-  --color-destructive: #EF4444;
-  --color-warning: #F59E0B;
-  --color-info: #3B82F6;
-  --color-success: #22C55E;
+  --color-destructive: #715A5A;
+  --color-warning: #715A5A;
+  --color-info: #44444E;
+  --color-success: #D3DAD9;
 
   /* Typography */
   --font-display: 'Barlow Condensed', sans-serif;
@@ -61,7 +61,7 @@
 
   /* Sidebar */
   --sidebar-width: 260px;
-  --sidebar-collapsed: 72px;
+  --sidebar-collapsed: 84px;
   --topbar-height: 64px;
 }
 

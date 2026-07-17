@@ -89,6 +89,8 @@ function AppLayout({
   const location = useLocation();
   const { user } = useAuth();
 
+  const [sidebarExpanded, setSidebarExpanded] = useState(true);
+
   const isMobilePage = location.pathname.startsWith('/mobile');
   const isLoginPage = location.pathname.startsWith('/login');
   const isSetupPage = location.pathname.startsWith('/setup');
@@ -107,8 +109,11 @@ function AppLayout({
   }
 
   return (
-    <div className="app-layout">
-      <Sidebar />
+    <div 
+      className="app-layout" 
+      style={{ '--sidebar-width': sidebarExpanded ? '260px' : '84px' } as React.CSSProperties}
+    >
+      <Sidebar isExpanded={sidebarExpanded} onToggle={() => setSidebarExpanded(!sidebarExpanded)} />
       <div className="main-content">
         <TopBar
           displayName={user?.displayName || 'Athletic User'}

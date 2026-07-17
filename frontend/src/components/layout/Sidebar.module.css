@@ -1,139 +1,478 @@
-/* Premium Cyberpunk Sidebar Styles */
+/* Collapsible Sidebar & Navigation Rail Styles — Burn-Ex AI */
 
 .sidebar {
   position: fixed;
   left: 0;
   top: 0;
   bottom: 0;
-  width: var(--sidebar-width);
-  background: #090E1A; /* Sleek dark blue-black background matching the reference */
-  border-right: 1px solid rgba(51, 65, 85, 0.4);
+  background: linear-gradient(180deg, var(--color-surface) 0%, #2E2C34 100%);
+  border-right: 1px solid var(--color-border);
   display: flex;
   flex-direction: column;
   z-index: 50;
-  padding: var(--space-lg) 0; /* Remove horizontal padding at the container root */
-  overflow-y: auto;
+  overflow: visible; /* Allow tooltips to slide out */
+  transition: width 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 6px 0 32px rgba(4, 13, 18, 0.45);
 }
 
-/* Brand Header */
+/* Expanded Layout Sizing */
+.expanded {
+  width: 260px;
+  padding: 24px 0;
+  align-items: stretch;
+}
+
+/* Collapsed Layout Sizing (Navigation Rail) */
+.collapsed {
+  width: 84px; /* Rail Width spec */
+  padding: 32px 0; /* Vertical breathing room */
+  align-items: center;
+}
+
+/* Logo Header and brand trigger */
 .brand {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding-left: 24px;
-  padding-right: 24px;
-  padding-bottom: 24px;
-  border-bottom: 1px solid rgba(51, 65, 85, 0.35); /* Subtle boundary divider line */
+  cursor: pointer;
+  user-select: none;
+  transition: transform 0.2s ease;
+}
+
+.expanded .brand {
+  padding: 0 24px 24px 24px;
+  border-bottom: 1px solid rgba(113, 90, 90, 0.3);
   margin-bottom: 24px;
 }
 
+.collapsed .brand {
+  margin-top: 32px; /* Top padding spec */
+  margin-bottom: 40px; /* Separator spacing spec */
+  justify-content: center;
+  width: 100%;
+}
+
+.brandIconWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.brandIconWrapper:hover {
+  transform: scale(1.08) rotate(5deg);
+}
+
 .brandIcon {
-  color: var(--color-accent); /* Active green flame icon */
-  filter: drop-shadow(0 0 6px rgba(34, 197, 94, 0.4));
+  color: var(--color-accent); /* Sage */
+  filter: drop-shadow(0 0 10px rgba(211, 218, 217, 0.5));
 }
 
 .brandText {
   font-family: var(--font-display);
-  font-size: 1.9rem;
+  font-size: 1.6rem;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--color-foreground);
 }
 
-/* Navigation List */
+/* Navigation lists & Groups */
 .nav {
   width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.expanded .nav {
+  gap: 28px; /* Increased gap between nav sections */
+}
+
+.collapsed .nav {
+  gap: 28px; /* Spacing between navigation items spec */
 }
 
 .navGroup {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  margin-bottom: 20px;
+}
+
+.expanded .navGroup {
+  gap: 8px; /* Spacing between section header and links */
+}
+
+.collapsed .navGroup {
+  gap: 24px; /* Vertical group spacing spec */
 }
 
 .groupLabel {
   font-family: var(--font-body);
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   font-weight: 700;
-  color: #475569; /* Slate gray heading */
+  color: var(--color-muted);
   text-transform: uppercase;
   letter-spacing: 0.08em;
   padding-left: 24px;
-  margin-bottom: 4px;
+  margin-bottom: 8px; /* Increased margin below label */
 }
 
 .navList {
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 6px; /* Spacing between navigation entries */
+  gap: 8px; /* Increased vertical space between navigation items */
 }
 
+.collapsed .navList {
+  gap: 24px; /* Separation gaps spec */
+}
+
+/* Nav Item Link */
 .navLink {
   position: relative;
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 12px 24px; /* Link bounds extend full-width */
-  color: #94A3B8; /* Muted steel blue color */
+  color: var(--color-muted);
   text-decoration: none;
   font-family: var(--font-body);
   font-weight: 500;
-  font-size: 1.05rem;
-  transition: color var(--transition-fast), background var(--transition-fast);
+  font-size: 0.95rem;
+  transition: all 250ms ease;
   cursor: pointer;
+}
+
+.expanded .navLink {
+  gap: 16px;
+  padding: 12px 24px; /* Increased vertical padding to 12px */
+}
+
+.collapsed .navLink {
+  justify-content: center;
+  width: 100%;
 }
 
 .navLink:hover {
   color: var(--color-foreground);
-  background: rgba(30, 41, 59, 0.3);
 }
 
-.navLink.active {
-  color: var(--color-accent) !important; /* Text and icon transition to solid green */
+.expanded .navLink:hover {
+  background: rgba(211, 218, 217, 0.08);
 }
 
-/* Active Indicator capsule aligned flush to the left edge of the sidebar */
+.expanded .navLink.active {
+  color: #FFFFFF !important; /* High contrast white text for active tab */
+  background: linear-gradient(90deg, rgba(211, 218, 217, 0.12) 0%, rgba(211, 218, 217, 0.02) 100%);
+  font-weight: 700;
+}
+
+/* Active indicator (Left glowing bar in Expanded Mode) */
 .activeIndicator {
   position: absolute;
   left: 0;
-  top: 6px;
-  bottom: 6px;
-  width: 4px;
+  top: 4px;
+  bottom: 4px;
+  width: 3.5px;
   background: var(--color-accent);
   border-radius: 0 4px 4px 0;
   box-shadow: 0 0 8px var(--color-accent-glow);
 }
 
+/* Active indicator (Small dot inside Icon Container in Collapsed Mode) */
+.activeIndicatorRail {
+  position: absolute;
+  left: 8px;
+  width: 3.5px;
+  height: 20px;
+  background: var(--color-accent);
+  border-radius: 0 4px 4px 0;
+  box-shadow: 0 0 10px var(--color-accent-glow);
+}
+
+/* Icon Container block - Centered 48x48 rounded 14px */
+.navIconWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: all 250ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.collapsed .navIconWrapper {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(113, 90, 90, 0.2);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+/* Hover effects for Rail Icons */
+.collapsed .navLink:hover .navIconWrapper {
+  background: rgba(211, 218, 217, 0.12);
+  border-color: rgba(211, 218, 217, 0.3);
+  transform: translateY(-2px) scale(1.05); /* Scale & Lift spec */
+  box-shadow: 0 4px 12px rgba(211, 218, 217, 0.15);
+}
+
+.collapsed .active .navIconWrapper {
+  background: linear-gradient(135deg, rgba(211, 218, 217, 0.2) 0%, rgba(211, 218, 217, 0.05) 100%);
+  border-color: var(--color-accent);
+  box-shadow: 0 0 14px rgba(211, 218, 217, 0.2);
+}
+
 .navIcon {
   display: flex;
   align-items: center;
-  flex-shrink: 0;
+  justify-content: center;
+  transition: transform 250ms ease;
+  color: var(--color-muted);
+}
+
+.navLink:hover .navIcon {
+  color: #FFFFFF; /* High contrast active icon color on hover */
+}
+
+.active .navIcon {
+  color: #FFFFFF; /* High contrast active icon color when active */
 }
 
 .navLabel {
   white-space: nowrap;
 }
 
-/* Bottom Actions Section */
+/* Badge tags inside links */
+.badge {
+  font-size: 0.6rem;
+  font-weight: 700;
+  background: rgba(113, 90, 90, 0.2);
+  color: var(--color-border);
+  padding: 1px 5px;
+  border-radius: var(--radius-sm);
+  margin-left: auto;
+  border: 1.5px solid rgba(113, 90, 90, 0.35);
+}
+
+.navDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  box-shadow: 0 0 6px var(--color-accent-glow);
+}
+
+.expanded .navDot {
+  position: absolute;
+  right: 24px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.collapsed .navDot {
+  position: absolute;
+  right: 6px;
+  top: 6px;
+}
+
+/* ─── Floating tooltips (Collapsed Mode) ─── */
+.tooltip {
+  position: absolute;
+  left: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  background: var(--color-surface); /* #44444E */
+  border: 1px solid var(--color-border); /* #715A5A */
+  color: var(--color-foreground);
+  padding: 8px 16px;
+  border-radius: var(--radius-md);
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: 4px 8px 24px rgba(4, 13, 18, 0.5);
+  z-index: 999;
+}
+
+/* ─── Bottom Profile / Utility Area ─── */
 .bottomSection {
-  border-top: 1px solid rgba(51, 65, 85, 0.35);
+  border-top: 1px solid rgba(113, 90, 90, 0.3);
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.expanded .bottomSection {
   padding-top: 16px;
-  margin-top: auto; /* Push settings tab to the very bottom */
 }
 
-/* Scrollbar adjustment */
-.sidebar::-webkit-scrollbar {
-  width: 4px;
+.collapsed .bottomSection {
+  padding-top: 24px;
+  margin-bottom: 32px; /* Bottom padding spec */
+  align-items: center;
+  gap: 24px;
 }
 
-.sidebar::-webkit-scrollbar-track {
+.profileContainer {
+  position: relative;
+}
+
+.expanded .profileContainer {
+  padding: 0 16px;
+}
+
+.collapsed .profileContainer {
+  padding: 0;
+  display: flex;
+  justify-content: center;
+}
+
+.profileTrigger {
+  display: flex;
+  align-items: center;
   background: transparent;
+  border: none;
+  cursor: pointer;
+  border-radius: var(--radius-md);
+  transition: background 0.2s ease;
+  color: var(--color-foreground);
 }
 
-.sidebar::-webkit-scrollbar-thumb {
-  background: rgba(51, 65, 85, 0.5);
-  border-radius: var(--radius-full);
+.expanded .profileTrigger {
+  gap: 12px;
+  width: 100%;
+  padding: 8px;
+}
+
+.collapsed .profileTrigger {
+  justify-content: center;
+  padding: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  border: 1px solid rgba(113, 90, 90, 0.2);
+}
+
+.profileTrigger:hover {
+  background: rgba(211, 218, 217, 0.08);
+  transform: translateY(-1px);
+}
+
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--color-accent) 0%, var(--color-border) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--color-foreground);
+  border: 1px solid var(--color-border);
+}
+
+.collapsed .avatar {
+  width: 34px;
+  height: 34px;
+}
+
+.profileInfo {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  flex: 1;
+}
+
+.profileName {
+  font-size: 0.85rem;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 130px;
+}
+
+.profileRole {
+  font-size: 0.7rem;
+  color: var(--color-muted);
+}
+
+.dropdownChevron {
+  color: var(--color-muted);
+  transition: transform 0.2s ease;
+}
+
+.dropdownChevron[data-open="true"] {
+  transform: rotate(180deg);
+}
+
+/* profile dropdown */
+.profileDropdownMenu {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 16px;
+  right: 16px;
+  background: var(--color-surface); /* #44444E */
+  border: 1px solid var(--color-border); /* #715A5A */
+  border-radius: var(--radius-md);
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  box-shadow: 0 -8px 24px rgba(4, 13, 18, 0.4);
+  z-index: 100;
+}
+
+.dropdownHeader {
+  display: flex;
+  flex-direction: column;
+  padding: 6px 8px 8px 8px;
+  border-bottom: 1px solid rgba(113, 90, 90, 0.3);
+  margin-bottom: 4px;
+}
+
+.dropdownName {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--color-foreground);
+}
+
+.dropdownRole {
+  font-size: 0.7rem;
+  color: var(--color-muted);
+}
+
+.dropdownItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: none;
+  color: var(--color-muted);
+  padding: 8px;
+  font-size: 0.8rem;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s ease;
+  width: 100%;
+}
+
+.dropdownItem:hover {
+  color: var(--color-foreground);
+  background: rgba(211, 218, 217, 0.08);
+}
+
+.dropdownDivider {
+  height: 1px;
+  background: rgba(113, 90, 90, 0.3);
+  margin: 4px 0;
+}
+
+.signOutBtn {
+  color: var(--color-foreground);
+}
+
+.signOutBtn:hover {
+  background: rgba(113, 90, 90, 0.15);
 }
