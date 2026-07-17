@@ -14,6 +14,7 @@ import type { Request, Response } from 'express';
 import mongoose from 'mongoose';
 import { WorkoutSessionModel, type IWorkoutSession } from '../models/WorkoutSession.js';
 import { UserModel } from '../models/User.js';
+import { inMemorySessions } from '../services/inMemorySessionStore.js';
 
 // ─────────────────────────────────────────────────────────────────
 // Types
@@ -48,10 +49,20 @@ interface RecordPrediction {
 // Helper: fetch all sessions for the authenticated user
 // ─────────────────────────────────────────────────────────────────
 async function fetchSessions(firebaseUid: string): Promise<IWorkoutSession[]> {
-  if (mongoose.connection.readyState !== 1) return [];
-  const user = await UserModel.findOne({ firebaseId: firebaseUid });
-  if (!user) return [];
-  return WorkoutSessionModel.find({ userId: user._id }).sort({ startTime: 1 }).lean();
+  // MongoDB online — query the real database
+  if (mongoose.connection.readyState === 1) {
+    const user = await UserModel.findOne({ firebaseId: firebaseUid });
+    if (!user) return [];
+    return WorkoutSessionModel.find({ userId: user._id }).sort({ startTime: 1 }).lean() as unknown as Promise<IWorkoutSession[]>;
+  }
+
+  // MongoDB offline — serve from the shared in-memory store.
+  // Sessions in the store are not user-scoped (offline mode is single-user local testing),
+  // so we return all of them sorted chronologically.
+  console.warn('[personalRecords] MongoDB offline — serving in-memory sessions');
+  return [...inMemorySessions].sort(
+    (a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
+  ) as unknown as IWorkoutSession[];
 }
 
 // ─────────────────────────────────────────────────────────────────

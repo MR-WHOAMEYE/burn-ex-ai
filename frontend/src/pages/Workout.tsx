@@ -606,6 +606,21 @@ export function WorkoutPage() {
         const result = await res.json();
         if (result.success) {
           console.log('✅ Session saved successfully to backend:', result.data);
+
+          // ── Trigger backend PR acknowledgement for key categories ──
+          // This causes /api/records to re-evaluate with the new session
+          // included. Any category that might have been broken gets flagged.
+          const authHeaders = {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          };
+          await Promise.allSettled([
+            fetch('http://localhost:8080/api/records/highestCalories', { method: 'PUT', headers: authHeaders }),
+            fetch('http://localhost:8080/api/records/maxReps',          { method: 'PUT', headers: authHeaders }),
+            fetch('http://localhost:8080/api/records/longestWorkout',   { method: 'PUT', headers: authHeaders }),
+            fetch('http://localhost:8080/api/records/highestIntensity', { method: 'PUT', headers: authHeaders }),
+          ]);
+          console.log('🏆 Personal records refreshed after session');
         } else {
           console.error('❌ Failed to save session:', result.error);
         }

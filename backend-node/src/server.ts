@@ -23,6 +23,7 @@ import { verifyFirebaseToken } from './middleware/auth.js';
 import { createSession } from './controllers/sessionController.js';
 import { upsertProfile, getProfile, logWeight } from './controllers/profileController.js';
 import { logWorkout, getWorkoutHistory } from './controllers/workoutController.js';
+import { getPersonalRecords, getRecordPrediction, getRecordTimeline, acknowledgeNewRecord } from './controllers/personalRecordsController.js';
 import { setupGeminiLiveProxy } from './services/geminiLiveService.js';
 import { spotifyController } from './controllers/spotifyController.js';
 
@@ -69,6 +70,12 @@ async function bootstrap(): Promise<void> {
   app.post('/api/profile/weight', verifyFirebaseToken, logWeight);
   app.post('/api/workouts', verifyFirebaseToken, logWorkout);
   app.get('/api/workouts/history', verifyFirebaseToken, getWorkoutHistory);
+
+  // ─── Personal Records Routes ──────────────────────────────
+  app.get('/api/records', verifyFirebaseToken, getPersonalRecords);
+  app.get('/api/records/prediction', verifyFirebaseToken, getRecordPrediction);
+  app.get('/api/records/timeline', verifyFirebaseToken, getRecordTimeline);
+  app.put('/api/records/:category', verifyFirebaseToken, acknowledgeNewRecord);
 
   // ─── Spotify API Routes ───────────────────────────────────
   app.get('/api/spotify/login', spotifyController.login);

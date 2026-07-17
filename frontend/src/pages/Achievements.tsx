@@ -432,15 +432,48 @@ const CATEGORY_ICONS: Record<string, React.ReactNode> = {
   mostPerformedExercise: <Star size={22} />,
   highestIntensity: <Heart size={22} />,
 };
+// ─── Category Meta (color, gradient, filterTag) ──────────────────
+// These are purely presentation values not stored in the DB.
+const CATEGORY_META: Record<string, { color: string; gradient: string; filterTag: string }> = {
+  longestWorkout:      { color: '#3B82F6', gradient: 'linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)', filterTag: 'time' },
+  highestCalories:     { color: '#F59E0B', gradient: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)', filterTag: 'calories' },
+  maxReps:             { color: '#22C55E', gradient: 'linear-gradient(135deg, #22C55E 0%, #16A34A 100%)', filterTag: 'exercise' },
+  longestStreak:       { color: '#A855F7', gradient: 'linear-gradient(135deg, #A855F7 0%, #7C3AED 100%)', filterTag: 'streak' },
+  highestAIAccuracy:   { color: '#06B6D4', gradient: 'linear-gradient(135deg, #06B6D4 0%, #0891B2 100%)', filterTag: 'ai' },
+  fastestWorkout:      { color: '#EF4444', gradient: 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)', filterTag: 'time' },
+  mostActiveDay:       { color: '#F97316', gradient: 'linear-gradient(135deg, #F97316 0%, #EA580C 100%)', filterTag: 'workout' },
+  totalWorkoutTime:    { color: '#10B981', gradient: 'linear-gradient(135deg, #10B981 0%, #059669 100%)', filterTag: 'time' },
+  mostPerformedExercise: { color: '#EC4899', gradient: 'linear-gradient(135deg, #EC4899 0%, #DB2777 100%)', filterTag: 'exercise' },
+  highestIntensity:    { color: '#F43F5E', gradient: 'linear-gradient(135deg, #F43F5E 0%, #E11D48 100%)', filterTag: 'ai' },
+};
 
-// ─── Main Page ────────────────────────────────────────────────────
+function getCategoryMeta(category: string) {
+  return CATEGORY_META[category] ?? { color: '#6B7280', gradient: 'linear-gradient(135deg, #6B7280 0%, #4B5563 100%)', filterTag: 'workout' };
+}
+
+function formatPreviousDisplay(category: string, prev: number): string {
+  switch (category) {
+    case 'longestWorkout': case 'fastestWorkout': return formatDuration(prev);
+    case 'highestCalories': return `${Math.round(prev)} kcal`;
+    case 'maxReps': return `${Math.round(prev)} reps`;
+    case 'longestStreak': return `${Math.round(prev)} days`;
+    case 'highestAIAccuracy': case 'highestIntensity': return `${Math.round(prev * 10) / 10}%`;
+    case 'totalWorkoutTime': return `${Math.round(prev * 10) / 10}h`;
+    default: return String(prev);
+  }
+}
+
 export function AchievementsPage() {
   const { token } = useAuth();
   const navigate = useNavigate();
 
-  const [sessions, setSessions] = useState<WorkoutSession[]>([]);
+  // Backend-computed personal records fetched from /api/records
+  const [records, setRecords] = useState<PersonalRecord[]>([]);
+  // Session count returned by the API (so we don't need sessions array)
+  const [sessionCount, setSessionCount] = useState(0);
+  // AI prediction from /api/records/prediction
+  const [prediction, setPrediction] = useState<AIPrediction | null>(null);
   const [loading, setLoading] = useState(true);
-  // null = no error | 'offline' = backend unreachable | 'auth' = token rejected
   const [errorKind, setErrorKind] = useState<'offline' | 'auth' | 'server' | null>(null);
 
   const [activeFilter, setActiveFilter] = useState('all');
@@ -451,35 +484,94 @@ export function AchievementsPage() {
   const [celebrationRecord, setCelebrationRecord] = useState<PersonalRecord | null>(null);
   const sortRef = useRef<HTMLDivElement>(null);
 
-  // Fetch workout history — gracefully handles CORS, auth, and server errors
+  /**
+   * Primary data fetch.
+   *
+   * Strategy (senior-dev approach — always show data):
+   * 1. Call /api/records (backend-computed from MongoDB).
+   * 2. If that returns empty (offline, no user, or zero sessions),
+   *    fall back to /api/workouts/history and compute client-side.
+   *    This ensures in-memory sessions are always visible.
+   */
   const fetchHistory = useCallback(async () => {
     if (!token) { setLoading(false); return; }
     setLoading(true);
     setErrorKind(null);
+
+    try {
+      const headers = { Authorization: `Bearer ${token}` };
+
+      // Fetch personal records and prediction in parallel
+      const [recordsRes, predRes] = await Promise.all([
+        fetch('http://localhost:8080/api/records', { headers }),
+        fetch('http://localhost:8080/api/records/prediction', { headers }),
+      ]);
+
+      // Auth error — don't fall back, just report
+      if (recordsRes.status === 401 || recordsRes.status === 403) {
+        setErrorKind('auth');
+        setRecords([]);
+        return;
+      }
+
+      if (recordsRes.ok) {
+        const recordsData = await recordsRes.json();
+        const fetchedRecords: PersonalRecord[] = Array.isArray(recordsData.data)
+          ? recordsData.data.map((r: any) => ({
+              ...r,
+              ...getCategoryMeta(r.category),
+              previousDisplay: r.previousValue != null
+                ? formatPreviousDisplay(r.category, r.previousValue)
+                : null,
+            }))
+          : [];
+
+        // If the backend returned populated records, use them
+        if (fetchedRecords.length > 0) {
+          setRecords(fetchedRecords);
+          setSessionCount(recordsData.sessionCount ?? fetchedRecords.length);
+
+          if (predRes.ok) {
+            const predData = await predRes.json();
+            setPrediction(predData.data ?? null);
+          }
+          return; // ✅ Done — primary path succeeded
+        }
+      }
+
+      // Backend returned empty or failed → fall back to /api/workouts/history
+      // This covers: MongoDB offline (in-memory sessions), new user with 0 DB records, etc.
+      await fetchHistoryFallback();
+    } catch {
+      // Network failure — fall back to client-side
+      await fetchHistoryFallback();
+    } finally {
+      setLoading(false);
+    }
+  }, [token]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  /**
+   * Fallback: fetch raw workout history and compute records client-side.
+   * Used when the /api/records endpoint is unavailable.
+   */
+  const fetchHistoryFallback = async () => {
+    if (!token) return;
     try {
       const res = await fetch('http://localhost:8080/api/workouts/history', {
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (res.status === 401 || res.status === 403) {
-        // Token rejected — treat as no sessions (demo users are valid)
-        setErrorKind('auth');
-        setSessions([]);
-        return;
-      }
-      if (!res.ok) {
-        setErrorKind('server');
-        return;
-      }
+      if (!res.ok) { setErrorKind('server'); return; }
       const data = await res.json();
-      setSessions(Array.isArray(data.data) ? data.data : []);
+      const sessions: WorkoutSession[] = Array.isArray(data.data) ? data.data : [];
+      const computed = computePersonalRecords(sessions);
+      setRecords(computed);
+      setSessionCount(sessions.length);
+      setPrediction(computeAIPrediction(sessions, computed));
     } catch {
-      // TypeError: Failed to fetch → CORS / backend offline
       setErrorKind('offline');
-      setSessions([]);
-    } finally {
-      setLoading(false);
+      setRecords([]);
     }
-  }, [token]);
+  };
 
   useEffect(() => { fetchHistory(); }, [fetchHistory]);
 
@@ -493,9 +585,6 @@ export function AchievementsPage() {
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, []);
-
-  const records = computePersonalRecords(sessions);
-  const prediction = computeAIPrediction(sessions, records);
 
   // Filter + search + sort
   const filteredRecords = records
@@ -518,6 +607,7 @@ export function AchievementsPage() {
     setTimeout(() => setConfettiActive(false), 3000);
     setTimeout(() => setCelebrationRecord(null), 4000);
   };
+
 
   // ─── Loading ────────────────────────────────────────────────────
   if (loading) {
@@ -559,7 +649,7 @@ export function AchievementsPage() {
   }
 
   // ─── Empty State ─────────────────────────────────────────────────
-  if (sessions.length === 0) {
+  if (records.length === 0 && sessionCount === 0) {
     return (
       <div className={styles.page}>
         <div className={styles.pageHeader}>
@@ -626,7 +716,7 @@ export function AchievementsPage() {
         >
           <div className={styles.sessionBadge}>
             <Trophy size={14} />
-            <span>{sessions.length} Session{sessions.length !== 1 ? 's' : ''} Analyzed</span>
+            <span>{sessionCount} Session{sessionCount !== 1 ? 's' : ''} Analyzed</span>
           </div>
           <button className={styles.refreshBtn} onClick={fetchHistory} title="Refresh">
             <RefreshCw size={14} />

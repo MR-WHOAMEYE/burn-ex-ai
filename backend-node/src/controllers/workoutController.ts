@@ -7,9 +7,8 @@ import type { Request, Response } from 'express';
 import mongoose from 'mongoose';
 import { WorkoutSessionModel } from '../models/WorkoutSession.js';
 import { UserModel } from '../models/User.js';
+import { inMemorySessions } from '../services/inMemorySessionStore.js';
 
-// Local cache to persist logged sessions in-memory when database is offline
-const inMemoryWorkouts: any[] = [];
 
 /**
  * POST /api/workouts
@@ -56,7 +55,7 @@ export async function logWorkout(req: Request, res: Response): Promise<void> {
         startTime: startTime ? new Date(startTime) : new Date(),
         endTime: endTime ? new Date(endTime) : new Date(),
       };
-      inMemoryWorkouts.push(workout);
+      inMemorySessions.push(workout);
     }
 
     res.status(201).json({
@@ -85,7 +84,7 @@ export async function getWorkoutHistory(req: Request, res: Response): Promise<vo
         workouts = await WorkoutSessionModel.find({ userId: user._id }).sort({ startTime: -1 });
       }
     } else {
-      workouts = [...inMemoryWorkouts];
+      workouts = [...inMemorySessions];
     }
 
     res.json({ success: true, data: workouts });
