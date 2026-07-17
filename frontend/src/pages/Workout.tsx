@@ -120,6 +120,23 @@ export function WorkoutPage() {
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  // User's real body weight for accurate calorie calculation.
+  // Fetched from the profile API on mount; falls back to 70kg if unavailable.
+  const [weightKg, setWeightKg] = useState(70);
+  useEffect(() => {
+    if (!token) return;
+    fetch('http://localhost:8080/api/profile', {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => {
+        if (data?.weightKg && typeof data.weightKg === 'number') {
+          setWeightKg(data.weightKg);
+        }
+      })
+      .catch(() => { /* silently keep default 70kg */ });
+  }, [token]);
+
   const [debugLog, setDebugLog] = useState<string[]>([]);
   const addLog = useCallback((msg: string) => {
     setDebugLog((prev) => [
@@ -237,6 +254,13 @@ export function WorkoutPage() {
             if (frameCount % 3 === 0) {
               const result = await classifierEngine.processFrame(keypoints);
               if (result && isWorkoutActiveRef.current) {
+                // Log when the biomechanics override corrects the LSTM
+                if (result.biomechanicsOverride) {
+                  if (frameCount % 30 === 0) {
+                    addLog(`[Bio] push_ups override active (horizontal body + elbow flex)`);
+                  }
+                }
+
                 setMetrics((prev) => {
                   const MET_LOOKUP: Record<string, number> = {
                     'squats': 5.0,
@@ -250,9 +274,8 @@ export function WorkoutPage() {
                   };
 
                   const met = MET_LOOKUP[result.label] || 4.0;
-                  const weightKg = 70; // Mock default weight
                   const calPerSec = (met * 3.5 * weightKg) / 200 / 60;
-                  const secondsDiff = 0.1 * 3; // 0.3s difference
+                  const secondsDiff = 0.1 * 3; // 0.3s per inference cycle
                   const newCalories = prev.calories + calPerSec * secondsDiff;
 
                   return {
@@ -266,14 +289,18 @@ export function WorkoutPage() {
               }
             }
 
-            // Real-time local rep counting heuristics when workout is active
+            // Real-time local rep counting — only the counter matching the
+            // current detected exercise fires, preventing double-counting.
             if (isWorkoutActiveRef.current) {
-              // Heuristic 1: Squats (Hip 11, Knee 13, Ankle 15)
-              const leftHip = keypoints[11];
-              const leftKnee = keypoints[13];
-              const leftAnkle = keypoints[15];
+              // Rep counter 1: Squats — knee angle heuristic
+              // Only active when LSTM (or override) says squats.
+              const currentExercise = metrics.exerciseType.toLowerCase().replace(/ /g, '_');
+              const leftHip    = keypoints[11];
+              const leftKnee   = keypoints[13];
+              const leftAnkle  = keypoints[15];
 
               if (
+                currentExercise === 'squats' &&
                 leftHip && leftKnee && leftAnkle &&
                 leftHip.score >= 0.4 && leftKnee.score >= 0.4 && leftAnkle.score >= 0.4
               ) {
@@ -287,12 +314,14 @@ export function WorkoutPage() {
                 }
               }
 
-              // Heuristic 2: Push-ups (Shoulder 5, Elbow 7, Wrist 9)
+              // Rep counter 2: Push-ups — elbow angle heuristic
+              // Active when the label is push_ups (LSTM or biomechanics override).
               const leftShoulder = keypoints[5];
-              const leftElbow = keypoints[7];
-              const leftWrist = keypoints[9];
+              const leftElbow    = keypoints[7];
+              const leftWrist    = keypoints[9];
 
               if (
+                (currentExercise === 'push_ups' || currentExercise === 'bench_press') &&
                 leftShoulder && leftElbow && leftWrist &&
                 leftShoulder.score >= 0.4 && leftElbow.score >= 0.4 && leftWrist.score >= 0.4
               ) {
