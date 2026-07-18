@@ -69,6 +69,9 @@ const HistoryPage = lazy(() =>
 const SettingsPage = lazy(() =>
   import('./pages/Settings').then(m => ({ default: m.SettingsPage }))
 );
+const LandingPage = lazy(() =>
+  import('./pages/Landing').then(m => ({ default: m.LandingPage }))
+);
 
 // Placeholder pages
 const PlaceholderPage = ({ name }: { name: string }) => (
@@ -127,15 +130,17 @@ function AppLayout({
   const isMobilePage = location.pathname.startsWith('/mobile');
   const isLoginPage = location.pathname.startsWith('/login');
   const isSetupPage = location.pathname.startsWith('/setup');
+  const isLandingPage = location.pathname === '/landing';
 
   // Mobile sensor page, Login, and Profile Setup pages run standalone (no dashboard sidebar/topbar)
-  if (isMobilePage || isLoginPage || isSetupPage) {
+  if (isMobilePage || isLoginPage || isSetupPage || isLandingPage) {
     return (
       <Suspense fallback={<LoadingFallback />}>
         <Routes>
           <Route path="/mobile" element={<MobileSensorPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/setup" element={<ProfileSetupPage />} />
+          <Route path="/landing" element={<LandingPage />} />
         </Routes>
       </Suspense>
     );
