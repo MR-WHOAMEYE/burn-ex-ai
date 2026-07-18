@@ -144,14 +144,8 @@ class ClassifierEngine {
       this.initPromise = (async () => {
         try {
           console.log('🤖 Initializing TensorFlow.js engine...');
-          // Phase 5: explicitly request WebGL backend to avoid CPU fallback.
-          // Wrapped in try/catch — if WebGL is unavailable (e.g., browser security policy),
-          // tf.ready() will select the best available backend automatically.
-          try {
-            await tf.setBackend('webgl');
-          } catch (backendErr) {
-            console.warn('[Perf] WebGL backend unavailable, using default backend:', backendErr);
-          }
+          // Let TF.js pick the best backend lazily — avoid blocking tf.setBackend('webgl')
+          // which compiles WebGL shaders synchronously and can freeze the browser 5+ seconds.
           await tf.ready();
 
           // Load MoveNet — try local first (fast), fall back to CDN if local fails
