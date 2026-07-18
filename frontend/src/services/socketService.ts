@@ -18,7 +18,9 @@ interface SyncPongPayload {
   serverSendTime: number;
 }
 
-const SOCKET_URL = import.meta.env.VITE_SOCKET_SERVER_URL || 'http://localhost:8080';
+// Using empty string ('') tells Socket.IO to connect to the current origin (e.g. https://10.13.43.140:5173).
+// The Vite proxy will securely forward /socket.io requests to the backend.
+const SOCKET_URL = import.meta.env.VITE_SOCKET_SERVER_URL || '';
 
 class SocketService {
   private socket: Socket | null = null;
@@ -173,6 +175,13 @@ class SocketService {
 
   get isConnected(): boolean {
     return this.socket?.connected ?? false;
+  }
+
+  /**
+   * Generic emit for custom events (e.g. imu-classification).
+   */
+  emit(event: string, data: any): void {
+    this.socket?.emit(event, data);
   }
 
   get currentOffset(): number {

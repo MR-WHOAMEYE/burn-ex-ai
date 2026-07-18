@@ -1,13 +1,14 @@
-/* Mobile Sensor Page styles — optimized for phone screens */
+/* Mobile Sensor PWA — optimized for phone screens */
 
 .container {
   min-height: 100vh;
+  min-height: 100dvh;
   background: var(--color-background);
-  padding: var(--space-lg);
+  padding: var(--space-md);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--space-lg);
+  gap: var(--space-md);
   max-width: 480px;
   margin: 0 auto;
 }
@@ -17,28 +18,16 @@
   display: flex;
   align-items: center;
   gap: var(--space-sm);
-  padding-top: var(--space-md);
+  padding-top: var(--space-sm);
 }
 
-.headerIcon {
-  color: var(--color-accent);
-}
+.headerIcon { color: var(--color-accent); }
 
 .title {
   font-family: var(--font-display);
-  font-size: 1.5rem;
+  font-size: 1.4rem;
   font-weight: 800;
   text-transform: uppercase;
-}
-
-/* Session Badge */
-.sessionBadge {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-full);
-  padding: var(--space-xs) var(--space-md);
-  font-size: 0.8rem;
-  color: var(--color-muted);
 }
 
 /* Status Row */
@@ -46,18 +35,31 @@
   display: flex;
   gap: var(--space-md);
   width: 100%;
+  align-items: center;
+  flex-wrap: wrap;
 }
 
 .statusItem {
   display: flex;
   align-items: center;
-  gap: var(--space-sm);
-  font-size: 0.85rem;
+  gap: 6px;
+  font-size: 0.8rem;
   color: var(--color-muted);
 }
 
-.statusOk { color: var(--color-success); }
-.statusError { color: var(--color-destructive); }
+.statusOk { color: var(--color-success, #22C55E); }
+.statusError { color: var(--color-destructive, #EF4444); }
+
+.sessionBadge {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  padding: 2px 10px;
+  font-size: 0.7rem;
+  color: var(--color-muted);
+  margin-left: auto;
+  font-family: monospace;
+}
 
 /* Permission Card */
 .permissionCard {
@@ -73,17 +75,18 @@
   width: 100%;
 }
 
-.warningIcon { color: var(--color-warning); }
-.errorIcon { color: var(--color-destructive); }
+.warningIcon { color: var(--color-warning, #F59E0B); }
+.errorIcon { color: var(--color-destructive, #EF4444); }
 
 .permTitle {
-  font-size: 1.2rem;
+  font-size: 1.1rem;
   text-transform: uppercase;
+  font-weight: 700;
 }
 
 .permDesc {
   color: var(--color-muted);
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   line-height: 1.6;
 }
 
@@ -91,15 +94,16 @@
   color: var(--color-muted);
   font-size: 0.8rem;
   line-height: 1.5;
-  background: var(--color-surface-elevated);
+  background: rgba(255, 255, 255, 0.02);
   padding: var(--space-md);
   border-radius: var(--radius-md);
   width: 100%;
+  border: 1px solid var(--color-border);
 }
 
 .enableBtn {
   width: 100%;
-  padding: var(--space-md) !important;
+  padding: 16px !important;
   font-size: 1.1rem !important;
   margin-top: var(--space-sm);
 }
@@ -107,18 +111,114 @@
 /* Streaming Card */
 .streamingCard {
   background: var(--color-surface);
-  border: 1px solid var(--color-success);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
   padding: var(--space-lg);
   width: 100%;
-  box-shadow: 0 0 20px rgba(34, 197, 94, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
 }
 
+/* ── Classification Hero ── */
+.classificationHero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: var(--space-lg) 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.exerciseIcon {
+  color: var(--color-accent, #22C55E);
+}
+
+.exerciseLabel {
+  font-family: var(--font-display, 'Barlow Condensed', sans-serif);
+  font-size: 2rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  text-align: center;
+  color: var(--color-foreground, #F8FAFC);
+}
+
+.confidenceBar {
+  width: 80%;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 99px;
+  overflow: hidden;
+  position: relative;
+}
+
+.confidenceFill {
+  height: 100%;
+  background: var(--color-accent, #22C55E);
+  border-radius: 99px;
+  transition: width 0.3s ease;
+}
+
+.confidenceText {
+  position: absolute;
+  right: -40px;
+  top: -4px;
+  font-size: 0.7rem;
+  color: var(--color-muted);
+  font-weight: 600;
+}
+
+/* ── Probability Bars ── */
+.probsGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.probItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.probLabel {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--color-muted);
+  text-transform: uppercase;
+  width: 90px;
+  flex-shrink: 0;
+}
+
+.probBar {
+  flex: 1;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.probFill {
+  height: 100%;
+  border-radius: 99px;
+  transition: width 0.3s ease;
+}
+
+.probVal {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--color-muted);
+  width: 30px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* ── Sensor Readouts ── */
 .streamHeader {
   display: flex;
   align-items: center;
   gap: var(--space-sm);
-  margin-bottom: var(--space-lg);
 }
 
 .streamTitle {
@@ -127,21 +227,21 @@
   text-transform: uppercase;
   letter-spacing: 0.04em;
   flex: 1;
+  font-size: 0.85rem;
 }
 
-/* Sensor Readouts */
 .sensorGrid {
   display: flex;
   flex-direction: column;
-  gap: var(--space-sm);
+  gap: 6px;
 }
 
 .sensorItem {
   display: flex;
   align-items: center;
   gap: var(--space-sm);
-  padding: var(--space-sm) var(--space-md);
-  background: var(--color-surface-elevated);
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.02);
   border-radius: var(--radius-md);
   font-size: 0.8rem;
 }
@@ -152,18 +252,18 @@
   text-transform: uppercase;
   letter-spacing: 0.04em;
   font-weight: 600;
+  font-size: 0.7rem;
 }
 
 .sensorValue {
   font-family: 'Barlow Condensed', monospace;
   color: var(--color-accent);
-  font-size: 0.85rem;
+  font-size: 0.8rem;
 }
 
 .packetCounter {
-  margin-top: var(--space-md);
   text-align: center;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   color: var(--color-muted);
 }
 
@@ -177,8 +277,10 @@
 }
 
 .instructions h3 {
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   margin-bottom: var(--space-md);
+  text-transform: uppercase;
+  font-weight: 700;
 }
 
 .instructions ul {
@@ -189,14 +291,15 @@
 }
 
 .instructions li {
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   color: var(--color-muted);
   padding-left: var(--space-md);
   position: relative;
+  line-height: 1.5;
 }
 
 .instructions li::before {
-  content: '→';
+  content: '\2192';
   position: absolute;
   left: 0;
   color: var(--color-accent);

@@ -35,6 +35,7 @@ import {
   ArrowUpRight,
   RefreshCw,
   X,
+  Send,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import styles from './Achievements.module.css';
@@ -435,8 +436,9 @@ const CATEGORY_ICONS: Record<string, React.ReactNode> = {
 
 // ─── Main Page ────────────────────────────────────────────────────
 export function AchievementsPage() {
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const navigate = useNavigate();
+  const isDemo = user?.uid === 'demo-user-123';
 
   const [sessions, setSessions] = useState<WorkoutSession[]>([]);
   const [loading, setLoading] = useState(true);
@@ -519,6 +521,38 @@ export function AchievementsPage() {
     setTimeout(() => setCelebrationRecord(null), 4000);
   };
 
+  const [sharing, setSharing] = useState<string | null>(null);
+  const [showPhoneModal, setShowPhoneModal] = useState(false);
+  const [waPhone, setWaPhone] = useState('');
+  const [pendingShareRecord, setPendingShareRecord] = useState<PersonalRecord | null>(null);
+
+  const DEMO_PHONE = '916382347574';
+
+  const sendAchievementWa = async (phone: string, record: PersonalRecord) => {
+    try {
+      setSharing(record.category);
+      const msg = `I just unlocked the ${record.label} achievement on Burn-Ex! My record is ${record.displayValue} ${record.unit}. Time to beat it!`;
+      await fetch('/api/whatsapp/nudge', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone, message: msg })
+      });
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setSharing(null);
+    }
+  };
+
+  const handleShareWhatsApp = (record: PersonalRecord) => {
+    if (isDemo) {
+      sendAchievementWa(DEMO_PHONE, record);
+    } else {
+      setPendingShareRecord(record);
+      setShowPhoneModal(true);
+    }
+  };
+
   // ─── Loading ────────────────────────────────────────────────────
   if (loading) {
     return (
@@ -589,6 +623,73 @@ export function AchievementsPage() {
 
   return (
     <div className={styles.page}>
+
+      {/* ─── WhatsApp Phone Modal ─── */}
+      {showPhoneModal && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 9999,
+          background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(6px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <div style={{
+            background: 'var(--color-secondary, #1E293B)', borderRadius: '16px',
+            padding: '32px', width: '90%', maxWidth: '400px',
+            border: '1px solid var(--color-border, #334155)',
+          }}>
+            <h3 style={{ margin: '0 0 8px', fontFamily: 'var(--font-display)', color: 'var(--color-foreground, #F8FAFC)' }}>
+              Share Achievement
+            </h3>
+            <p style={{ margin: '0 0 16px', fontSize: '0.85rem', color: 'var(--color-muted, #94a3b8)' }}>
+              Enter your WhatsApp number to receive your achievement.
+            </p>
+            <input
+              type="tel"
+              placeholder="+91 9876543210"
+              value={waPhone}
+              onChange={(e) => setWaPhone(e.target.value.replace(/[^0-9+\s]/g, ''))}
+              style={{
+                width: '100%', padding: '12px 16px', borderRadius: '8px',
+                border: '1px solid var(--color-border, #334155)',
+                background: 'var(--color-background, #020617)',
+                color: 'var(--color-foreground, #F8FAFC)',
+                fontSize: '1rem', marginBottom: '16px', outline: 'none',
+                boxSizing: 'border-box',
+              }}
+              autoFocus
+            />
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button
+                onClick={() => {
+                  const digits = waPhone.replace(/[^0-9]/g, '');
+                  if (digits.length >= 10 && pendingShareRecord) {
+                    sendAchievementWa(digits, pendingShareRecord);
+                    setShowPhoneModal(false);
+                    setPendingShareRecord(null);
+                  }
+                }}
+                style={{
+                  flex: 1, padding: '12px', borderRadius: '8px', border: 'none',
+                  background: 'var(--color-accent, #22C55E)', color: '#fff',
+                  fontWeight: 600, cursor: 'pointer', fontSize: '0.9rem',
+                }}
+              >
+                Send
+              </button>
+              <button
+                onClick={() => { setShowPhoneModal(false); setPendingShareRecord(null); }}
+                style={{
+                  flex: 1, padding: '12px', borderRadius: '8px', border: 'none',
+                  background: 'var(--color-border, #334155)', color: 'var(--color-foreground, #F8FAFC)',
+                  fontWeight: 600, cursor: 'pointer', fontSize: '0.9rem',
+                }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Confetti */}
       <Confetti active={confettiActive} />
 
@@ -808,6 +909,31 @@ export function AchievementsPage() {
                       <span className={styles.cardDate}>{fmtDate(record.achievedAt)}</span>
                     )}
                   </div>
+                  
+                  {/* Share Button */}
+                  <button 
+                    onClick={() => handleShareWhatsApp(record)}
+                    disabled={sharing === record.category}
+                    title="Send to Phone via WhatsApp"
+                    style={{
+                      marginLeft: 'auto',
+                      background: 'transparent',
+                      border: 'none',
+                      color: record.color,
+                      cursor: 'pointer',
+                      padding: '8px',
+                      borderRadius: '50%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      opacity: sharing === record.category ? 0.5 : 0.8,
+                      transition: '0.2s',
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = `${record.color}20`)}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                  >
+                    <Send size={16} />
+                  </button>
                 </div>
 
                 {/* Value */}

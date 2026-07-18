@@ -1,0 +1,18 @@
+{
+  "name": "Burn-Ex Sensor",
+  "short_name": "BurnEx",
+  "description": "On-device AI exercise detection using phone IMU sensors",
+  "start_url": "/mobile",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#020617",
+  "theme_color": "#22C55E",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

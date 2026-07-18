@@ -150,6 +150,13 @@ export function setupSocketHandlers(io: Server): void {
       });
     });
 
+    // ── Phone IMU Classification ─────────────────────────
+    socket.on('imu-classification', (data: any) => {
+      if (!data.sessionId) return;
+      // Broadcast the classification to the laptop (in the same session room)
+      io.to(`session_${data.sessionId}`).emit('imu-classification', data);
+    });
+
     // ── Disconnect ───────────────────────────────────────
     socket.on('disconnect', () => {
       console.log(`🔌 Socket disconnected: ${socket.id}`);

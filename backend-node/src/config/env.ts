@@ -22,9 +22,10 @@ export const ENV = {
   // AI Microservice
   AI_SERVICE_URL: process.env.AI_SERVICE_URL || 'http://localhost:8000',
 
-  // WhatsApp Cloud API
-  WHATSAPP_API_TOKEN: process.env.WHATSAPP_API_TOKEN || '',
-  WHATSAPP_PHONE_NUMBER_ID: process.env.WHATSAPP_PHONE_NUMBER_ID || '',
+  // OpenWA WhatsApp API
+  OPENWA_API_KEY: process.env.OPENWA_API_KEY || '',
+  OPENWA_BASE_URL: process.env.OPENWA_BASE_URL || 'http://localhost:2785',
+  OPENWA_SESSION_ID: process.env.OPENWA_SESSION_ID || '',
 
   // CORS
   FRONTEND_ORIGIN: process.env.FRONTEND_ORIGIN || 'http://localhost:5173',

@@ -57,10 +57,23 @@ import {
   LogOut,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { classifierEngine } from '../services/classifierEngine';
+import { angleClassifier } from '../services/angleClassifier';
 import { GeminiLiveClient } from '../services/geminiLive';
+import { QRCodeSVG } from 'qrcode.react';
 import styles from './Workout.module.css';
 import type { WorkoutMetrics, PostureGrade } from '../types';
+
+const loadClassifierEngine = (() => {
+  let enginePromise: Promise<typeof import('../services/classifierEngine')> | null = null;
+
+  return () => {
+    if (!enginePromise) {
+      enginePromise = import('../services/classifierEngine');
+    }
+
+    return enginePromise;
+  };
+})();
 
 // Posture grade color mapping
 const POSTURE_COLORS: Record<PostureGrade, string> = {
@@ -182,7 +195,7 @@ function drawSkeletonWithHUD(ctx: CanvasRenderingContext2D, keypoints: any[]) {
 }
 
 export function WorkoutPage() {
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const requestRef = useRef<number | null>(null);
@@ -203,7 +216,7 @@ export function WorkoutPage() {
   const [weightKg, setWeightKg] = useState(70);
   useEffect(() => {
     if (!token) return;
-    fetch('http://localhost:8080/api/profile', {
+    fetch('/api/profile', {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((r) => r.ok ? r.json() : null)
@@ -222,6 +235,27 @@ export function WorkoutPage() {
       ...prev.slice(0, 14),
     ]);
   }, []);
+
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
+
+  // Pre-warm WebGL shaders on mount while displaying a dedicated loading screen.
+  // This prevents the user from interacting with the page while the thread is blocked.
+  useEffect(() => {
+    // 50ms timeout ensures the browser paints the loading screen BEFORE the thread freezes
+    const timer = setTimeout(() => {
+      loadClassifierEngine()
+        .then(({ classifierEngine }) => classifierEngine.initialize())
+        .then(() => {
+          setIsInitialLoading(false);
+          addLog('AI Engine pre-warmed successfully.');
+        })
+        .catch(err => {
+          console.error(err);
+          setIsInitialLoading(false);
+        });
+    }, 50);
+    return () => clearTimeout(timer);
+  }, [addLog]);
 
   const [metrics, setMetrics] = useState<WorkoutMetrics>({
     reps: 0,
@@ -243,6 +277,50 @@ export function WorkoutPage() {
   const [spotifySong, setSpotifySong] = useState('Not playing');
   const [coachingAlert, setCoachingAlert] = useState<string>('Keep knees slightly outward');
   const [ghostModeActive, setGhostModeActive] = useState(false);
+
+  // WhatsApp phone number for workout summary
+  const isDemo = user?.uid === 'demo-user-123';
+  const [whatsappPhone, setWhatsappPhone] = useState('');
+  const [showPhonePrompt, setShowPhonePrompt] = useState(false);
+
+  // QR code for phone pairing
+  const [showQR, setShowQR] = useState(false);
+  const [imuDetection, setImuDetection] = useState<string | null>(null);
+  const pairSessionId = useRef(`s-${Date.now().toString(36)}`).current;
+  // Use LAN IP for QR code so phone can connect (localhost won't work on phone)
+  const lanHost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? '10.13.43.140'
+    : window.location.hostname;
+  const mobileUrl = `https://${lanHost}:${window.location.port}/mobile?session=${pairSessionId}`;
+
+  // Listen for phone pairing + IMU classification via Socket.IO
+  useEffect(() => {
+    import('../services/socketService').then(({ socketService }) => {
+      if (!socketService.isConnected) {
+        socketService.connect(token || 'laptop-session');
+      }
+      socketService.emit('register-laptop', { sessionId: pairSessionId });
+
+      // Listen for phone connection
+      socketService.onPairingComplete(() => {
+        setPhoneConnected(true);
+        setShowQR(false);
+      });
+
+      // Listen for IMU exercise classification from phone
+      const handler = (data: any) => {
+        if (data?.sessionId === pairSessionId && data?.displayLabel) {
+          setImuDetection(data.displayLabel);
+          setPhoneConnected(true);
+        }
+      };
+      socketService.on('imu-classification', handler);
+
+      return () => {
+        socketService.off('imu-classification', handler);
+      };
+    });
+  }, [pairSessionId, token]);
 
   // Radar mock performance metric data
   const radarData = [
@@ -300,7 +378,7 @@ export function WorkoutPage() {
     // Spotify Web Playback SDK Initialization
     const initializeSpotify = async () => {
       try {
-        const statusRes = await fetch('http://127.0.0.1:8080/api/spotify/status');
+        const statusRes = await fetch('/api/spotify/status');
         const statusData = await statusRes.json();
         setSpotifyConnected(statusData.connected);
 
@@ -311,7 +389,7 @@ export function WorkoutPage() {
               name: 'Burn-Ex AI Player',
               getOAuthToken: async (cb) => {
                 try {
-                  const tokenRes = await fetch('http://127.0.0.1:8080/api/spotify/token');
+                  const tokenRes = await fetch('/api/spotify/token');
                   const tokenData = await tokenRes.json();
                   if (tokenData.token) {
                     cb(tokenData.token);
@@ -352,7 +430,7 @@ export function WorkoutPage() {
               console.log('Spotify Web Player Ready with Device ID', device_id);
               
               // Automatically transfer playback to this device
-              fetch('http://127.0.0.1:8080/api/spotify/token').then(res => res.json()).then(data => {
+              fetch('/api/spotify/token').then(res => res.json()).then(data => {
                 if (data.token) {
                   fetch('https://api.spotify.com/v1/me/player', {
                     method: 'PUT',
@@ -462,16 +540,20 @@ export function WorkoutPage() {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Load models lazily (only now, when camera is active — not on page mount)
     setIsModelLoading(true);
     addLog('Initializing TensorFlow.js models...');
-    classifierEngine.initialize().then(() => {
-      addLog('🤖 MoveNet & LSTM classifiers ready');
-      setIsModelLoading(false);
-    }).catch((err) => {
-      addLog(`❌ Model initialization failed: ${err?.message || err}`);
-      setIsModelLoading(false);
-    });
+
+    // Yield to the browser rendering engine for 1 tick so it can actually paint the
+    // "Loading..." spinner BEFORE tf.js synchronously blocks the main thread with WebGL compilation.
+    setTimeout(() => {
+      loadClassifierEngine().then(({ classifierEngine }) => classifierEngine.initialize()).then(() => {
+        addLog('MoveNet & LSTM classifiers ready');
+        setIsModelLoading(false);
+      }).catch((err) => {
+        addLog(`Model initialization failed: ${err?.message || err}`);
+        setIsModelLoading(false);
+      });
+    }, 50);
 
     let frameCount = 0;
     let squatState: 'up' | 'down' = 'up';
@@ -509,6 +591,8 @@ export function WorkoutPage() {
 
         const now = Date.now();
 
+        const { classifierEngine } = await loadClassifierEngine();
+
         if (classifierEngine.isLoaded) {
           // Run pose estimation every tick (100ms = 10fps max)
           const poses = await classifierEngine.estimatePoses(video);
@@ -528,37 +612,73 @@ export function WorkoutPage() {
             // Draw skeleton + angle HUD
             drawSkeletonWithHUD(ctx, keypoints);
 
-            // LSTM classification at max 3fps (every 300ms)
+            // ── 1. FAST: Angle classifier on EVERY frame (instant, no buffer) ──
+            // Runs even before workout starts so user sees STANDING/SITTING immediately
+            {
+              const angleResult = angleClassifier.classify(keypoints);
+              if (angleResult && angleResult.confidence > 0.35) {
+                const isIdle = angleResult.key === 'standing' || angleResult.key === 'sitting';
+                const angleExercise = angleResult.key.toUpperCase().replace(/_/g, ' ');
+                const angleIntensity = Math.round(angleResult.confidence * 100);
+
+                // Only accumulate calories for actual exercises during active workout
+                if (!isIdle && isWorkoutActiveRef.current) {
+                  const MET_LOOKUP: Record<string, number> = {
+                    'squats': 5.0, 'push_ups': 8.0, 'jumping_jacks': 8.0,
+                    'sit_ups': 4.0, 'pull_ups': 8.0, 'jump_rope': 9.0,
+                    'clean_and_jerk': 10.0, 'bench_press': 6.0,
+                  };
+                  const met = MET_LOOKUP[angleResult.key] || 4.0;
+                  const calPerSec = (met * 3.5 * weightKg) / 200 / 60;
+                  metricsRef.current.calories += calPerSec * 0.1; // 0.1 since this runs at 10fps
+                }
+
+                currentExerciseRef.current = angleResult.key;
+                setMetrics((prev) => {
+                  if (prev.exerciseType === angleExercise && Math.abs(prev.intensity - angleIntensity) < 5) return prev;
+                  if (!isIdle && lastTipExerciseRef.current !== angleResult.key) {
+                    lastTipExerciseRef.current = angleResult.key;
+                    const tip = localCoach.getFormTip(angleResult.key);
+                    if (tip) setBurnBoostTip(tip.text);
+                  }
+                  return { ...prev, exerciseType: angleExercise, calories: metricsRef.current.calories, intensity: isIdle ? 0 : angleIntensity, smoothness: isIdle ? 0 : 86 };
+                });
+              }
+            }
+
+            // ── 2. BACKGROUND: LSTM refines every 300ms (corrects angle classifier if needed) ──
             if (now - lastLstmTime >= 300) {
               lastLstmTime = now;
               const result = await classifierEngine.processFrame(keypoints);
               if (result && isWorkoutActiveRef.current) {
                 if (result.biomechanicsOverride && frameCount % 10 === 0) {
-                  addLog(`[Bio] push_ups override active`);
+                  addLog(`[Bio] override active: ${result.label}`);
                 }
 
-                const MET_LOOKUP: Record<string, number> = {
-                  'squats': 5.0, 'push_ups': 8.0, 'jumping_jacks': 8.0,
-                  'sit_ups': 4.0, 'pull_ups': 8.0, 'jump_rope': 9.0,
-                  'clean_and_jerk': 10.0, 'bench_press': 6.0,
-                };
-                const met = MET_LOOKUP[result.label] || 4.0;
-                const calPerSec = (met * 3.5 * weightKg) / 200 / 60;
-                metricsRef.current.calories += calPerSec * 0.3;
-
-                const newExerciseType = result.label.toUpperCase().replace(/_/g, ' ');
-                const newIntensity = Math.round(result.confidence * 100);
-
-                setMetrics((prev) => {
-                  if (prev.exerciseType === newExerciseType && Math.abs(prev.intensity - newIntensity) < 5) return prev;
-                  currentExerciseRef.current = result.label;
-                  if (lastTipExerciseRef.current !== result.label) {
-                    lastTipExerciseRef.current = result.label;
-                    const tip = localCoach.getFormTip(result.label);
-                    if (tip) setBurnBoostTip(tip.text);
+                // ── 3. FALLBACK: If LSTM is also confused, ask Gemini AI to verify ──
+                if (result.needsAiFallback) {
+                  if (geminiClientRef.current && lastTipExerciseRef.current !== 'ai_fallback') {
+                    lastTipExerciseRef.current = 'ai_fallback';
+                    const current = currentExerciseRef.current.toUpperCase().replace(/_/g, ' ');
+                    geminiClientRef.current.sendContextUpdate(
+                      `CV detected "${current}" but unsure. Look at video and call update_detected_exercise with correct exercise name if different.`
+                    );
                   }
-                  return { ...prev, exerciseType: newExerciseType, calories: metricsRef.current.calories, intensity: newIntensity, smoothness: 86 };
-                });
+                } else if (result.confidence > 0.6) {
+                  // LSTM is confident — override angle classifier
+                  const lstmExercise = result.label.toUpperCase().replace(/_/g, ' ');
+                  const lstmIntensity = Math.round(result.confidence * 100);
+                  currentExerciseRef.current = result.label;
+                  setMetrics((prev) => {
+                    if (prev.exerciseType === lstmExercise && Math.abs(prev.intensity - lstmIntensity) < 5) return prev;
+                    if (lastTipExerciseRef.current !== result.label) {
+                      lastTipExerciseRef.current = result.label;
+                      const tip = localCoach.getFormTip(result.label);
+                      if (tip) setBurnBoostTip(tip.text);
+                    }
+                    return { ...prev, exerciseType: lstmExercise, calories: metricsRef.current.calories, intensity: lstmIntensity, smoothness: 86 };
+                  });
+                }
 
                 const pose = staticPoseDetector.detect(keypoints);
                 const prevPose = staticPoseRef.current;
@@ -607,14 +727,18 @@ export function WorkoutPage() {
               }
 
               const leftShoulder = keypoints[5], leftElbow = keypoints[7], leftWrist = keypoints[9];
-              if ((currentExercise === 'push_ups' || currentExercise === 'bench_press') &&
+              if ((currentExercise === 'push_ups' || currentExercise === 'bench_press' || currentExercise.includes('shoulder_press') || currentExercise.includes('pull-up')) &&
                 leftShoulder && leftElbow && leftWrist &&
                 leftShoulder.score >= 0.4 && leftElbow.score >= 0.4 && leftWrist.score >= 0.4) {
                 const elbowAngle = computeAngle(leftShoulder, leftElbow, leftWrist);
                 setCurrentRomAngle(Math.round(elbowAngle));
                 if (elbowAngle < peakRomRef.current) { peakRomRef.current = elbowAngle; setPeakRomAngle(Math.round(elbowAngle)); }
+                
+                // For push/pull movements, <100 is bent, >150 is straight.
                 if (elbowAngle < 100 && pushupState === 'up') {
-                  pushupState = 'down'; setCoachingAlert('Keep body straight and tight');
+                  pushupState = 'down'; 
+                  if (currentExercise.includes('pull-up')) setCoachingAlert('Great pull! Control the descent.');
+                  else setCoachingAlert('Keep body straight and tight');
                 } else if (elbowAngle > 150 && pushupState === 'down') {
                   pushupState = 'up'; localRepsRef.current++;
                   setMetrics((prev) => ({ ...prev, reps: localRepsRef.current }));
@@ -622,7 +746,9 @@ export function WorkoutPage() {
                   repTimestampsRef.current = [...repTimestampsRef.current.filter(ts => t - ts <= 60000), t];
                   setCadenceRPM(repTimestampsRef.current.length);
                   const milestone = localCoach.checkMilestone(localRepsRef.current);
-                  if (milestone) setCoachingAlert(milestone.text); else setCoachingAlert('Nice pushup form. Maintain cadence.');
+                  if (milestone) setCoachingAlert(milestone.text); 
+                  else if (currentExercise.includes('pull-up')) setCoachingAlert('Full extension reached. Hang tight.');
+                  else setCoachingAlert('Nice form. Maintain cadence.');
                 }
               }
             }
@@ -652,7 +778,7 @@ export function WorkoutPage() {
 
   // ── Camera Access ──────────────────────────────────────────
   const startWorkout = useCallback(() => {
-    classifierEngine.clearBuffer();
+    angleClassifier.reset();
     staticPoseDetector.reset();
     localCoach.reset();
     localRepsRef.current = 0;
@@ -672,6 +798,11 @@ export function WorkoutPage() {
       smoothness: 0,
       alert: null,
     }));
+
+    void loadClassifierEngine().then(({ classifierEngine }) => {
+      classifierEngine.clearBuffer();
+    });
+
     // Bug #5 fix: timer is handled ONLY by the useEffect below — no setInterval here
     if (!isCameraActive) startCamera();
   }, [isCameraActive, startCamera]);
@@ -716,12 +847,38 @@ export function WorkoutPage() {
         });
         const result = await res.json();
         if (result.success) {
-          console.log('✅ Session saved successfully to backend:', result.data);
+          console.log('Session saved successfully to backend:', result.data);
         } else {
-          console.error('❌ Failed to save session:', result.error);
+          console.error('Failed to save session:', result.error);
+        }
+
+        // Send workout summary via WhatsApp
+        const sendWaSummary = (phone: string) => {
+          fetch('http://localhost:8080/api/whatsapp/workout-summary', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              phone,
+              exercise: metrics.exerciseType || 'UNKNOWN',
+              reps: metrics.reps,
+              calories: metrics.calories,
+              durationMinutes: Math.round(elapsedSeconds / 60),
+            }),
+          }).catch(() => {});
+        };
+
+        if (isDemo) {
+          // Demo user — send to hardcoded demo number
+          sendWaSummary('916382347574');
+        } else if (whatsappPhone) {
+          // Real user who already entered their number
+          sendWaSummary(whatsappPhone);
+        } else {
+          // Real user — prompt for phone number
+          setShowPhonePrompt(true);
         }
       } catch (err) {
-        console.error('❌ Error logging session:', err);
+        console.error('Error logging session:', err);
       }
     }
   }, [elapsedSeconds, metrics, token]);
@@ -788,7 +945,18 @@ export function WorkoutPage() {
         geminiClientRef.current = null;
       }
       try {
-        const client = new GeminiLiveClient(videoRef.current, addLog);
+        const client = new GeminiLiveClient(
+          videoRef.current, 
+          addLog,
+          (exerciseName) => {
+            setMetrics(prev => ({
+              ...prev,
+              exerciseType: exerciseName,
+              intensity: 99 // Restore Pose Estimation Confidence when AI confirms it
+            }));
+            currentExerciseRef.current = exerciseName.toLowerCase().replace(/ /g, '_');
+          }
+        );
         geminiClientRef.current = client;
         await client.connect();
         // Periodic background Gemini context update every 15s
@@ -796,9 +964,10 @@ export function WorkoutPage() {
           const pose = staticPoseRef.current;
           const ex = currentExerciseRef.current;
           const cal = Math.round(metricsRef.current.calories);
+          const reps = metricsRef.current.reps;
           geminiClientRef.current?.sendContextUpdate(
-            `[Background check] User pose: ${pose.state} (${Math.round(pose.durationSeconds)}s). ` +
-            `Exercise: ${ex}. Calories burned: ${cal}. Briefly check form or encourage. Max 1 sentence.`
+            `Exercise: ${ex}. Reps: ${reps}. Calories: ${cal} kcal. Pose: ${pose.state}. ` +
+            `Give a quick form tip or encouragement based on what you see. Be specific about their body position.`
           );
         }, 15000);
       } catch (err) {
@@ -814,9 +983,144 @@ export function WorkoutPage() {
     return `${m}:${s}`;
   };
 
+  if (isInitialLoading) {
+    return (
+      <div style={{
+        height: '100vh', display: 'flex', flexDirection: 'column',
+        alignItems: 'center', justifyContent: 'center', background: 'var(--color-background, #020617)'
+      }}>
+        <div className={styles.spinner} style={{ width: 48, height: 48, borderTopColor: 'var(--color-accent, #22C55E)', marginBottom: 24, border: '4px solid rgba(255,255,255,0.1)', borderTop: '4px solid var(--color-accent, #22C55E)', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+        <h2 style={{ fontFamily: 'var(--font-display)', color: 'var(--color-foreground, #F8FAFC)', margin: 0 }}>
+          Initializing Burn-Ex Studio...
+        </h2>
+        <p style={{ color: 'var(--color-muted, #94a3b8)', marginTop: 8 }}>
+          Warming up AI engine and compiling WebGL shaders (this may take a few seconds)
+        </p>
+        <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
+  }
+
   return (
     <div className={styles.workoutPage}>
-      
+
+      {/* ─── QR Code Phone Pairing Modal ─── */}
+      {showQR && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 9999,
+          background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(8px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }} onClick={() => setShowQR(false)}>
+          <div style={{
+            background: 'var(--color-secondary, #1E293B)', borderRadius: '20px',
+            padding: '32px', width: '90%', maxWidth: '360px', textAlign: 'center',
+            border: '1px solid var(--color-border, #334155)',
+          }} onClick={(e) => e.stopPropagation()}>
+            <h3 style={{ margin: '0 0 6px', fontFamily: 'var(--font-display)', color: 'var(--color-foreground, #F8FAFC)', fontSize: '1.1rem' }}>
+              Pair Phone Sensor
+            </h3>
+            <p style={{ margin: '0 0 20px', fontSize: '0.8rem', color: 'var(--color-muted, #94a3b8)' }}>
+              Scan with your phone to start on-device AI exercise detection
+            </p>
+            <div style={{
+              background: '#fff', borderRadius: '12px', padding: '16px',
+              display: 'inline-block', marginBottom: '16px',
+            }}>
+              <QRCodeSVG value={mobileUrl} size={200} level="M" />
+            </div>
+            <p style={{ fontSize: '0.7rem', color: 'var(--color-muted, #94a3b8)', wordBreak: 'break-all', margin: '0 0 16px' }}>
+              {mobileUrl}
+            </p>
+            <button
+              onClick={() => setShowQR(false)}
+              style={{
+                padding: '10px 24px', borderRadius: '8px', border: 'none',
+                background: 'var(--color-border, #334155)', color: 'var(--color-foreground, #F8FAFC)',
+                fontWeight: 600, cursor: 'pointer', fontSize: '0.85rem',
+              }}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ─── WhatsApp Phone Prompt Modal ─── */}
+      {showPhonePrompt && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 9999,
+          background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(6px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <div style={{
+            background: 'var(--color-secondary, #1E293B)', borderRadius: '16px',
+            padding: '32px', width: '90%', maxWidth: '400px',
+            border: '1px solid var(--color-border, #334155)',
+          }}>
+            <h3 style={{ margin: '0 0 8px', fontFamily: 'var(--font-display)', color: 'var(--color-foreground, #F8FAFC)' }}>
+              Send Workout Summary
+            </h3>
+            <p style={{ margin: '0 0 16px', fontSize: '0.85rem', color: 'var(--color-muted, #94a3b8)' }}>
+              Enter your WhatsApp number to receive your workout results.
+            </p>
+            <input
+              type="tel"
+              placeholder="+91 9876543210"
+              value={whatsappPhone}
+              onChange={(e) => setWhatsappPhone(e.target.value.replace(/[^0-9+\s]/g, ''))}
+              style={{
+                width: '100%', padding: '12px 16px', borderRadius: '8px',
+                border: '1px solid var(--color-border, #334155)',
+                background: 'var(--color-background, #020617)',
+                color: 'var(--color-foreground, #F8FAFC)',
+                fontSize: '1rem', marginBottom: '16px', outline: 'none',
+                boxSizing: 'border-box',
+              }}
+              autoFocus
+            />
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button
+                onClick={() => {
+                  if (whatsappPhone.replace(/[^0-9]/g, '').length >= 10) {
+                    const digits = whatsappPhone.replace(/[^0-9]/g, '');
+                    fetch('http://localhost:8080/api/whatsapp/workout-summary', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        phone: digits,
+                        exercise: metrics.exerciseType || 'UNKNOWN',
+                        reps: metrics.reps,
+                        calories: metrics.calories,
+                        durationMinutes: Math.round(elapsedSeconds / 60),
+                      }),
+                    }).catch(() => {});
+                    setShowPhonePrompt(false);
+                  }
+                }}
+                style={{
+                  flex: 1, padding: '12px', borderRadius: '8px', border: 'none',
+                  background: 'var(--color-accent, #22C55E)', color: '#fff',
+                  fontWeight: 600, cursor: 'pointer', fontSize: '0.9rem',
+                }}
+              >
+                Send Summary
+              </button>
+              <button
+                onClick={() => setShowPhonePrompt(false)}
+                style={{
+                  padding: '12px 20px', borderRadius: '8px',
+                  border: '1px solid var(--color-border, #334155)',
+                  background: 'transparent', color: 'var(--color-foreground, #F8FAFC)',
+                  cursor: 'pointer', fontSize: '0.9rem',
+                }}
+              >
+                Skip
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ─── 1. WORKOUT HEADER COMMAND BAR ─── */}
       <div className={styles.header}>
         <div className={styles.headerTitleGroup}>
@@ -833,9 +1137,14 @@ export function WorkoutPage() {
               {isCameraActive ? <Camera size={12} /> : <CameraOff size={12} />}
               Camera: {isCameraActive ? 'LIVE' : 'OFFLINE'}
             </span>
-            <span className={`badge ${phoneConnected ? 'badge-success' : 'badge-warning'}`}>
+            <span
+              className={`badge ${phoneConnected ? 'badge-success' : 'badge-warning'}`}
+              style={{ cursor: 'pointer' }}
+              onClick={() => setShowQR(true)}
+              title="Click to pair phone via QR code"
+            >
               {phoneConnected ? <SmartphoneCharging size={12} /> : <Smartphone size={12} />}
-              IMU Link: {phoneConnected ? 'FUSED' : 'POSE ONLY'}
+              {phoneConnected ? 'IMU: FUSED' : 'Pair Phone'}
             </span>
           </div>
 
@@ -1233,9 +1542,9 @@ export function WorkoutPage() {
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '6px', fontSize: '11px', color: 'var(--color-muted)' }}>
-                <span>Signal Quality: Good</span>
-                <button className={styles.syncBtn} onClick={() => setPhoneConnected(!phoneConnected)}>
-                  {phoneConnected ? 'Disconnect IMU' : 'Simulate IMU'}
+                <span>Signal Quality: {phoneConnected ? 'Good' : 'No Signal'}</span>
+                <button className={styles.syncBtn} onClick={() => setShowQR(true)}>
+                  Pair Phone (QR)
                 </button>
               </div>
             </div>
@@ -1309,7 +1618,7 @@ export function WorkoutPage() {
                   <button 
                     className={styles.musicBtn} 
                     style={{ background: '#1DB954', color: '#fff', border: 'none', padding: '8px 16px' }}
-                    onClick={() => window.location.href = 'http://127.0.0.1:8080/api/spotify/login'}
+                    onClick={() => window.location.href = '/api/spotify/login'}
                   >
                     Connect to Spotify
                   </button>
@@ -1348,7 +1657,7 @@ export function WorkoutPage() {
                         playerRef.current.disconnect();
                         playerRef.current = null;
                       }
-                      await fetch('http://127.0.0.1:8080/api/spotify/logout');
+                      await fetch('/api/spotify/logout');
                       setSpotifyConnected(false);
                       setSpotifySong('Not playing');
                       setSpotifyPlaying(false);

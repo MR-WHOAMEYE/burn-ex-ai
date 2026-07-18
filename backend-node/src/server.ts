@@ -26,6 +26,8 @@ import { logWorkout, getWorkoutHistory } from './controllers/workoutController.j
 import { setupGeminiLiveProxy } from './services/geminiLiveService.js';
 import { spotifyController } from './controllers/spotifyController.js';
 import { suggestionController } from './services/suggestionEngine.js';
+import { whatsappController } from './controllers/whatsappController.js';
+import { nutritionController } from './controllers/nutritionController.js';
 
 async function bootstrap(): Promise<void> {
   // ─── Initialize External Services ─────────────────────────
@@ -87,10 +89,18 @@ async function bootstrap(): Promise<void> {
   app.get('/api/suggestions/exercise-tip', suggestionController.exerciseTip);
   app.post('/api/suggestions/check-sedentary', suggestionController.checkSedentary);
 
+  // ─── Nutrition AI Routes ─────────────────────────────────
+  app.post('/api/nutrition/analyze', nutritionController.analyzeMeal);
+
+  // ─── WhatsApp (OpenWA) Routes ───────────────────────────
+  app.post('/api/whatsapp/workout-summary', whatsappController.workoutSummary);
+  app.post('/api/whatsapp/nudge', whatsappController.nudge);
+  app.post('/api/whatsapp/daily-summary', whatsappController.dailySummary);
+
   // ─── Socket.IO Server ─────────────────────────────────────
   const io = new SocketIOServer(httpServer, {
     cors: {
-      origin: ENV.FRONTEND_ORIGIN,
+      origin: ENV.NODE_ENV === 'production' ? ENV.FRONTEND_ORIGIN : '*',
       methods: ['GET', 'POST'],
       credentials: true,
     },

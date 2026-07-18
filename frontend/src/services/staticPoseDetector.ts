@@ -29,12 +29,17 @@ const KP = {
 const MIN_SCORE = 0.35;
 const DEBOUNCE_FRAMES = 3;
 
-function mid(a: Keypoint, b: Keypoint) {
-  return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
-}
-
 function visible(kp: Keypoint | undefined): kp is Keypoint {
   return !!kp && (kp.score ?? 0) >= MIN_SCORE;
+}
+
+function mid(a: Keypoint | undefined, b: Keypoint | undefined) {
+  const va = visible(a);
+  const vb = visible(b);
+  if (va && vb) return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+  if (va) return { x: a.x, y: a.y };
+  if (vb) return { x: b.x, y: b.y };
+  return null;
 }
 
 /**
@@ -50,6 +55,10 @@ function angle(
   const dot = bax * bcx + bay * bcy;
   const mag = Math.sqrt((bax ** 2 + bay ** 2) * (bcx ** 2 + bcy ** 2)) + 1e-8;
   return (Math.acos(Math.max(-1, Math.min(1, dot / mag))) * 180) / Math.PI;
+}
+
+function dist(a: {x: number, y: number}, b: {x: number, y: number}) {
+  return Math.sqrt((a.x - b.x) ** 2 + (a.y - b.y) ** 2);
 }
 
 class StaticPoseDetector {
@@ -73,32 +82,22 @@ class StaticPoseDetector {
     const lAnkle    = get(KP.L_ANKLE);
     const rAnkle    = get(KP.R_ANKLE);
 
-    // We need at least hip + knee + one shoulder/ankle for any classification
-    const haveHips    = visible(lHip) && visible(rHip);
-    const haveKnees   = visible(lKnee) && visible(rKnee);
-    const haveShoulders = visible(lShoulder) && visible(rShoulder);
+    const hipMid      = mid(lHip, rHip);
+    const kneeMid     = mid(lKnee, rKnee);
+    const ankleMid    = mid(lAnkle, rAnkle);
+    const shoulderMid = mid(lShoulder, rShoulder);
 
-    if (!haveHips || !haveKnees) {
+    // If we don't have at least one shoulder, hip, and knee, we can't reliably detect posture
+    if (!shoulderMid || !hipMid || !kneeMid) {
       return this._output('unknown', 0);
     }
 
-    const hipMid      = mid(lHip, rHip);
-    const kneeMid     = mid(lKnee, rKnee);
-    const ankleMid    = visible(lAnkle) && visible(rAnkle)
-                          ? mid(lAnkle, rAnkle)
-                          : null;
-    const shoulderMid = haveShoulders ? mid(lShoulder, rShoulder) : null;
-
     // ── 1. Spine angle from vertical ───────────────────────────────
-    let spineAngle = 0; // degrees from vertical; 0 = upright, 90 = horizontal
-    if (shoulderMid) {
-      const dx = Math.abs(hipMid.x - shoulderMid.x);
-      const dy = Math.abs(hipMid.y - shoulderMid.y);
-      spineAngle = (Math.atan2(dx, dy) * 180) / Math.PI;
-    }
+    const dx = Math.abs(hipMid.x - shoulderMid.x);
+    const dy = Math.abs(hipMid.y - shoulderMid.y);
+    const spineAngle = (Math.atan2(dx, dy) * 180) / Math.PI;
 
     // ── 2. Hip-knee angle (hip flexion) ────────────────────────────
-    // Use ankle as the third point for the hip-knee-ankle angle (leg extension)
     let legAngle = 180; // default fully extended
     if (ankleMid) {
       legAngle = angle(
@@ -109,17 +108,18 @@ class StaticPoseDetector {
     }
 
     // ── 3. Hip-knee flexion angle (hip crease) ─────────────────────
-    let hipFlexionAngle = 180;
-    if (shoulderMid) {
-      hipFlexionAngle = angle(
-        shoulderMid.x, shoulderMid.y,
-        hipMid.x, hipMid.y,
-        kneeMid.x, kneeMid.y
-      );
-    }
+    const hipFlexionAngle = angle(
+      shoulderMid.x, shoulderMid.y,
+      hipMid.x, hipMid.y,
+      kneeMid.x, kneeMid.y
+    );
 
-    // ── 4. Body height ratio (hip Y vs shoulder Y) ─────────────────
-    const bodyHeight = shoulderMid ? Math.abs(hipMid.y - shoulderMid.y) : 0;
+    // ── 4. Perspective Foreshortening (Laptop sitting detection) ───
+    // When sitting facing a camera, the thighs point towards the lens (Z-axis).
+    // In 2D, the thigh length appears significantly shorter than the torso.
+    const torsoLength = dist(shoulderMid, hipMid);
+    const thighLength = dist(hipMid, kneeMid);
+    const foreshorteningRatio = thighLength / (torsoLength || 1);
 
     // ── Classification ─────────────────────────────────────────────
     let state: StaticPoseState = 'unknown';
@@ -130,25 +130,29 @@ class StaticPoseDetector {
       state = 'lying';
       confidence = Math.min(1, (spineAngle - 50) / 40);
     }
-    // SITTING: knees bent, hips flexed
-    else if (hipFlexionAngle < 120 && legAngle < 130) {
+    // SITTING: hips flexed OR severe thigh foreshortening (legs pointing at camera)
+    else if (hipFlexionAngle < 135 || foreshorteningRatio < 0.7) {
       state = 'sitting';
-      const flexScore = Math.max(0, (120 - hipFlexionAngle) / 60);
-      confidence = Math.min(1, flexScore + 0.3);
+      const flexScore = Math.max(0, (135 - hipFlexionAngle) / 45);
+      const shortenScore = Math.max(0, (0.7 - foreshorteningRatio) / 0.3);
+      const baseScore = Math.max(flexScore, shortenScore);
+      
+      // Boost confidence if leg is also visibly bent
+      const legBonus = ankleMid && legAngle < 130 ? 0.2 : 0;
+      confidence = Math.min(1, baseScore + 0.4 + legBonus);
     }
-    // STANDING: legs extended, spine upright
-    else if (legAngle > 150 && spineAngle < 25) {
+    // STANDING: hips extended, spine upright, normal proportions
+    else if (hipFlexionAngle > 150 && spineAngle < 30 && foreshorteningRatio > 0.8) {
       state = 'standing';
-      confidence = Math.min(1, (legAngle - 150) / 30 + (25 - spineAngle) / 50);
+      confidence = Math.min(1, (hipFlexionAngle - 150) / 30 + (30 - spineAngle) / 50);
     }
     // UNKNOWN: ambiguous
     else {
-      // Best guess based on which threshold is closest
-      if (legAngle > 130) {
-        state = 'standing';
+      if (foreshorteningRatio < 0.75 || hipFlexionAngle < 145) {
+        state = 'sitting';
         confidence = 0.4;
       } else {
-        state = 'sitting';
+        state = 'standing';
         confidence = 0.4;
       }
     }

@@ -11,8 +11,10 @@
  *    periodic pose/calorie checks without requiring an audio/video frame.
  */
 
+const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+const defaultWsUrl = `${protocol}//${window.location.host}/api/gemini-live`;
 const WS_URL =
-  (import.meta as any).env?.VITE_GEMINI_WS_URL ?? 'ws://localhost:8080/api/gemini-live';
+  (import.meta as any).env?.VITE_GEMINI_WS_URL ?? defaultWsUrl;
 
 export class GeminiLiveClient {
   private ws: WebSocket | null = null;
@@ -24,7 +26,8 @@ export class GeminiLiveClient {
 
   constructor(
     private videoElement: HTMLVideoElement,
-    private onMessage: (msg: string) => void
+    private onMessage: (msg: string) => void,
+    public onExerciseUpdate?: (exercise: string) => void
   ) {}
 
   async connect() {
@@ -71,13 +74,43 @@ export class GeminiLiveClient {
 
         const response = JSON.parse(data);
 
-        // Handle ServerContent (text/audio from Gemini)
+        // Handle ServerContent (text/audio/function from Gemini)
         if (response.serverContent?.modelTurn?.parts) {
           const parts = response.serverContent.modelTurn.parts;
           for (const part of parts) {
             // Handle Audio output
             if (part.inlineData && part.inlineData.mimeType.startsWith('audio/pcm')) {
               this.playAudioBase64(part.inlineData.data);
+            }
+            
+            // Handle Function Calls
+            if (part.functionCall) {
+              const { name, args } = part.functionCall;
+              if (name === 'update_detected_exercise' && args?.exerciseName) {
+                // Call the UI callback
+                if (this.onExerciseUpdate) {
+                  this.onExerciseUpdate(args.exerciseName.toUpperCase());
+                }
+                
+                // Reply to Gemini so it knows the function succeeded
+                const functionResponse = {
+                  clientContent: {
+                    turns: [{
+                      role: "user",
+                      parts: [{
+                        functionResponse: {
+                          name: "update_detected_exercise",
+                          response: { result: "success" }
+                        }
+                      }]
+                    }],
+                    turnComplete: true
+                  }
+                };
+                if (this.ws.readyState === WebSocket.OPEN) {
+                  this.ws.send(JSON.stringify(functionResponse));
+                }
+              }
             }
           }
         }
@@ -169,14 +202,10 @@ export class GeminiLiveClient {
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
 
-    // Send 1 frame per second for first 5s, then 1 per 5s if no change
+    // Send 1 frame per second continuously
     this.videoInterval = window.setInterval(() => {
       if (!this.isConnected || !this.ws || !this.videoElement) return;
       if (this.videoElement.videoWidth === 0) return;
-
-      this.frameCount++;
-      // After first 5 frames, only send every 5th frame
-      if (this.frameCount > 5 && this.frameCount % 5 !== 0) return;
 
       canvas.width = this.videoElement.videoWidth;
       canvas.height = this.videoElement.videoHeight;
@@ -185,8 +214,8 @@ export class GeminiLiveClient {
       const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
       const base64Data = dataUrl.split(',')[1];
 
-      // Skip if frame is identical to last sent
-      if (this.frameCount > 5 && base64Data === this.lastFrameData) return;
+      // Skip if frame is identical to last sent (e.g. video is frozen)
+      if (base64Data === this.lastFrameData) return;
       this.lastFrameData = base64Data;
 
       const msg = {

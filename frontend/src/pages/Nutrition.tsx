@@ -130,24 +130,49 @@ export function NutritionPage() {
   const processFile = async (file: File) => {
     setIsUploading(true);
     setScanResult(null);
-    
-    // Simulate AI image label translation
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-    
-    setScanResult({
-      detectedFoods: ['Sourdough Avocado Toast', 'Poached Free-Range Egg', 'Cherry Tomatoes'],
-      cal: 410,
-      protein: 18,
-      carbs: 34,
-      fats: 22,
-      fiber: 7,
-      sugar: 2.8,
-      sodium: 320,
-      confidence: 96,
-      healthScore: 92,
-      suggestions: 'Excellent macronutrient balance. Healthy monounsaturated fats from avocado. Add spinach or arugula to boost Vitamin K levels.',
-    });
-    setIsUploading(false);
+
+    try {
+      // Convert image to base64
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const result = reader.result as string;
+          // Strip the data:image/...;base64, prefix
+          resolve(result.split(',')[1]);
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+
+      const res = await fetch('http://localhost:8080/api/nutrition/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          imageBase64: base64,
+          mimeType: file.type || 'image/jpeg',
+        }),
+      });
+
+      if (!res.ok) throw new Error(`Server error ${res.status}`);
+
+      const json = await res.json();
+      if (json.success && json.data) {
+        setScanResult(json.data);
+      } else {
+        throw new Error(json.error || 'Unknown error');
+      }
+    } catch (err) {
+      console.error('Nutrition scan failed:', err);
+      setScanResult({
+        detectedFoods: ['Could not detect food'],
+        cal: 0, protein: 0, carbs: 0, fats: 0,
+        fiber: 0, sugar: 0, sodium: 0,
+        confidence: 0, healthScore: 0,
+        suggestions: 'Failed to analyze image. Please try again with a clearer photo.',
+      });
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const handleDrop = (e: React.DragEvent) => {
@@ -219,21 +244,47 @@ export function NutritionPage() {
         <p className={styles.subtitle}>Immersive real-time metabolic diagnostics & macronutrient engine</p>
       </div>
 
-      {/* HERO BANNER - TALLER & 2-COLUMN STRUCTURE */}
+      {/* HERO BANNER - UNIFIED AI MEAL SCANNER + DIAGNOSTICS */}
       <div className={styles.heroSection}>
-        <div className={styles.heroGrid}>
-          {/* Left Block: Combined Health Score, Calories & Macro Indicators */}
-          <div className={styles.heroMainCard}>
-            <div className={styles.heroScoreHeader}>
+        <div
+          className={`${styles.heroMainCard} ${dragActive ? styles.dragActive : ''}`}
+          onDragEnter={handleDrag}
+          onDragOver={handleDrag}
+          onDragLeave={handleDrag}
+          onDrop={handleDrop}
+        >
+          <div className={styles.heroScoreHeader}>
+            <div className={styles.scannerHeader}>
+              <Camera size={18} className={styles.cameraIcon} />
               <div>
-                <h2 className={styles.cardHeaderTitle}>Today's Nutrition Diagnostics</h2>
-                <p className={styles.cardHeaderSubtitle}>Real-time telemetry and metabolic tracking</p>
+                <h2 className={styles.cardHeaderTitle}>AI Meal Scanner</h2>
+                <p className={styles.cardHeaderSubtitle}>Scan meals & track real-time metabolic diagnostics</p>
               </div>
-              <span className={styles.pillBadge}>Live Syncing</span>
             </div>
-            
-            <div className={styles.heroBodyRow}>
-              {/* Progress Ring block */}
+            <span className={styles.scannerBadge}>Instant Upload</span>
+          </div>
+
+          <div className={styles.heroBodyRow}>
+            {/* Upload zone */}
+            <div className={styles.dropZoneArea} onClick={handlePhotoUpload}>
+              <Upload size={32} className={styles.uploadIcon} />
+              <p className={styles.dropText}>
+                <strong>Drag & Drop</strong> food photo here, or <span>browse local files</span>
+              </p>
+              <span className={styles.captureHint}>Supports JPEG, PNG & mobile camera triggers</span>
+            </div>
+
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              onChange={handleFileChange}
+              style={{ display: 'none' }}
+            />
+
+            {/* Nutrition Diagnostics */}
+            <div className={styles.caloriesIntakeDetails}>
               <div className={styles.scoreRingContainer}>
                 <svg viewBox="0 0 120 120" className={styles.ringSvg}>
                   <circle
@@ -259,75 +310,38 @@ export function NutritionPage() {
                 </div>
               </div>
 
-              {/* Calories diagnostics */}
-              <div className={styles.caloriesIntakeDetails}>
-                <div className={styles.calorieItemRow}>
-                  <div className={styles.intakeItem}>
-                    <span className={styles.intakeLabel}>Calories Registered</span>
-                    <span className={styles.intakeVal}>{dailyCalories.current} kcal</span>
-                  </div>
-                  <div className={styles.intakeItem}>
-                    <span className={styles.intakeLabel}>Target Intake Goal</span>
-                    <span className={styles.intakeVal}>{dailyCalories.target} kcal</span>
-                  </div>
+              <div className={styles.calorieItemRow}>
+                <div className={styles.intakeItem}>
+                  <span className={styles.intakeLabel}>Calories Registered</span>
+                  <span className={styles.intakeVal}>{dailyCalories.current} kcal</span>
                 </div>
-                
-                {/* Macro progress meters */}
-                <div className={styles.macroPillsList}>
-                  {macros.map(m => (
-                    <div key={m.label} className={styles.macroPill}>
-                      <div className={styles.pillLabels}>
-                        <span className={styles.pillName}>{m.label}</span>
-                        <span className={styles.pillVals}>{m.current}g / {m.target}g</span>
-                      </div>
-                      <div className={styles.pillTrack}>
-                        <div 
-                          className={styles.pillBarFill} 
-                          style={{ 
-                            background: m.color,
-                            width: `${Math.min((m.current / m.target) * 100, 100)}%` 
-                          }} 
-                        />
-                      </div>
+                <div className={styles.intakeItem}>
+                  <span className={styles.intakeLabel}>Target Intake Goal</span>
+                  <span className={styles.intakeVal}>{dailyCalories.target} kcal</span>
+                </div>
+              </div>
+
+              {/* Macro progress meters */}
+              <div className={styles.macroPillsList}>
+                {macros.map(m => (
+                  <div key={m.label} className={styles.macroPill}>
+                    <div className={styles.pillLabels}>
+                      <span className={styles.pillName}>{m.label}</span>
+                      <span className={styles.pillVals}>{m.current}g / {m.target}g</span>
                     </div>
-                  ))}
-                </div>
+                    <div className={styles.pillTrack}>
+                      <div
+                        className={styles.pillBarFill}
+                        style={{
+                          background: m.color,
+                          width: `${Math.min((m.current / m.target) * 100, 100)}%`
+                        }}
+                      />
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
-          </div>
-
-          {/* Right Block: Spacious AI Meal Scanner Card */}
-          <div 
-            className={`${styles.heroScannerCard} ${dragActive ? styles.dragActive : ''}`}
-            onDragEnter={handleDrag}
-            onDragOver={handleDrag}
-            onDragLeave={handleDrag}
-            onDrop={handleDrop}
-          >
-            <div className={styles.scannerTitleHeader}>
-              <div className={styles.scannerHeader}>
-                <Camera size={18} className={styles.cameraIcon} />
-                <h2 className={styles.cardHeaderTitle}>AI Meal Scanner</h2>
-              </div>
-              <span className={styles.scannerBadge}>Instant Upload</span>
-            </div>
-            
-            <div className={styles.dropZoneArea} onClick={handlePhotoUpload}>
-              <Upload size={32} className={styles.uploadIcon} />
-              <p className={styles.dropText}>
-                <strong>Drag & Drop</strong> food photo here, or <span>browse local files</span>
-              </p>
-              <span className={styles.captureHint}>Supports JPEG, PNG & mobile camera triggers</span>
-            </div>
-
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              capture="environment"
-              onChange={handleFileChange}
-              style={{ display: 'none' }}
-            />
           </div>
         </div>
       </div>

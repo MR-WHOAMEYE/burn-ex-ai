@@ -34,19 +34,19 @@ const JOINT_MAP_INDICES = [0, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16];
 
 // MoveNet keypoint indices used by the biomechanics layer
 const KP = {
-  NOSE:           0,
-  L_SHOULDER:     5,
-  R_SHOULDER:     6,
-  L_ELBOW:        7,
-  R_ELBOW:        8,
-  L_WRIST:        9,
-  R_WRIST:       10,
-  L_HIP:         11,
-  R_HIP:         12,
-  L_KNEE:        13,
-  R_KNEE:        14,
-  L_ANKLE:       15,
-  R_ANKLE:       16,
+  NOSE: 0,
+  L_SHOULDER: 5,
+  R_SHOULDER: 6,
+  L_ELBOW: 7,
+  R_ELBOW: 8,
+  L_WRIST: 9,
+  R_WRIST: 10,
+  L_HIP: 11,
+  R_HIP: 12,
+  L_KNEE: 13,
+  R_KNEE: 14,
+  L_ANKLE: 15,
+  R_ANKLE: 16,
 } as const;
 
 export interface ClassificationResult {
@@ -55,6 +55,8 @@ export interface ClassificationResult {
   probabilities: Record<string, number>;
   /** True when the biomechanics override fired (LSTM prediction was replaced). */
   biomechanicsOverride: boolean;
+  /** True when the CV is highly confident the prediction is wrong and needs Gemini AI to classify. */
+  needsAiFallback?: boolean;
 }
 
 // ── Biomechanics helpers ──────────────────────────────────────────────────────
@@ -103,15 +105,15 @@ function computeBiomechanics(kps: poseDetection.Keypoint[]): {
   if (vis(KP.L_SHOULDER) && vis(KP.L_ELBOW) && vis(KP.L_WRIST)) {
     elbowAngles.push(jointAngle(
       get(KP.L_SHOULDER).x, get(KP.L_SHOULDER).y,
-      get(KP.L_ELBOW).x,    get(KP.L_ELBOW).y,
-      get(KP.L_WRIST).x,    get(KP.L_WRIST).y,
+      get(KP.L_ELBOW).x, get(KP.L_ELBOW).y,
+      get(KP.L_WRIST).x, get(KP.L_WRIST).y,
     ));
   }
   if (vis(KP.R_SHOULDER) && vis(KP.R_ELBOW) && vis(KP.R_WRIST)) {
     elbowAngles.push(jointAngle(
       get(KP.R_SHOULDER).x, get(KP.R_SHOULDER).y,
-      get(KP.R_ELBOW).x,    get(KP.R_ELBOW).y,
-      get(KP.R_WRIST).x,    get(KP.R_WRIST).y,
+      get(KP.R_ELBOW).x, get(KP.R_ELBOW).y,
+      get(KP.R_WRIST).x, get(KP.R_WRIST).y,
     ));
   }
   const elbowAngle = elbowAngles.length > 0
@@ -130,8 +132,8 @@ class ClassifierEngine {
   private initPromise: Promise<void> | null = null;
 
   // Biomechanics rolling buffers (same 40-frame window)
-  private spineBuffer:  (number | null)[] = [];
-  private elbowBuffer:  (number | null)[] = [];
+  private spineBuffer: (number | null)[] = [];
+  private elbowBuffer: (number | null)[] = [];
 
   /**
    * Initializes both the TF.js WebGL/WASM backend, MoveNet, and custom LSTM.
@@ -144,36 +146,39 @@ class ClassifierEngine {
       this.initPromise = (async () => {
         try {
           console.log('🤖 Initializing TensorFlow.js engine...');
-          // Let TF.js pick the best backend lazily — avoid blocking tf.setBackend('webgl')
-          // which compiles WebGL shaders synchronously and can freeze the browser 5+ seconds.
+          // Force WebGL backend to prevent WebGPU WGSL parsing crashes
+          await tf.setBackend('webgl');
           await tf.ready();
 
-          // Load MoveNet — try local first (fast), fall back to CDN if local fails
-          try {
-            this.poseDetector = await poseDetection.createDetector(
-              poseDetection.SupportedModels.MoveNet,
-              {
-                modelType: poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING,
-                modelUrl: '/models/movenet-lightning/model.json',
-              }
-            );
-            console.log('✅ MoveNet loaded from local cache');
-          } catch (localErr) {
-            console.warn('[Perf] Local MoveNet failed, falling back to CDN:', localErr);
-            this.poseDetector = await poseDetection.createDetector(
-              poseDetection.SupportedModels.MoveNet,
-              { modelType: poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING }
-            );
-            console.log('✅ MoveNet loaded from CDN (fallback)');
-          }
+          const poseDetectorPromise = (async () => {
+            try {
+              return await poseDetection.createDetector(
+                poseDetection.SupportedModels.MoveNet,
+                {
+                  modelType: poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING,
+                  modelUrl: '/models/movenet-lightning/model.json',
+                }
+              );
+            } catch (localErr) {
+              console.warn('[Perf] Local MoveNet failed, falling back to CDN:', localErr);
+              return await poseDetection.createDetector(
+                poseDetection.SupportedModels.MoveNet,
+                { modelType: poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING }
+              );
+            }
+          })();
 
           // Load custom Bi-LSTM LayersModel with cache-busting query parameter.
           // strict:false allows best-effort weight loading — tolerates Keras 3/TF.js
           // naming differences (lstm_cell/ prefix vs flat kernel paths).
-          this.lstmModel = await tf.loadLayersModel('/models/burnex/model.json?v=5', {
+          const lstmPromise = tf.loadLayersModel('/models/burnex/model.json', {
             strict: false,
           });
-          console.log('✅ Custom B-LSTM LayersModel loaded');
+
+          const [poseDetector, lstmModel] = await Promise.all([poseDetectorPromise, lstmPromise]);
+          this.poseDetector = poseDetector;
+          this.lstmModel = lstmModel;
+          console.log('✅ MoveNet and Custom B-LSTM LayersModel loaded');
         } catch (error) {
           console.error('❌ Failed to initialize TF.js models:', error);
           this.initPromise = null; // Clear so subsequent calls can retry
@@ -221,7 +226,7 @@ class ClassifierEngine {
     const bbox_x2 = visiblePoints > 0 ? maxX : 1;
     const bbox_y1 = visiblePoints > 0 ? minY : 0;
     const bbox_y2 = visiblePoints > 0 ? maxY : 1;
-    const width  = Math.max(bbox_x2 - bbox_x1, 1e-3);
+    const width = Math.max(bbox_x2 - bbox_x1, 1e-3);
     const height = Math.max(bbox_y2 - bbox_y1, 1e-3);
 
     // ── 2. Extract 39 normalized features ────────────────────────
@@ -256,10 +261,10 @@ class ClassifierEngine {
     if (this.frameBuffer.length === 40) {
       const inputTensor = tf.tensor3d([this.frameBuffer]);
       const prediction = this.lstmModel!.predict(inputTensor) as tf.Tensor;
-      
+
       // Use async data() instead of blocking dataSync() to prevent "Page Unresponsive"
       const probabilities = await prediction.data() as Float32Array;
-      
+
       // Manually dispose since we can't use tf.tidy with async/await
       inputTensor.dispose();
       prediction.dispose();
@@ -284,7 +289,7 @@ class ClassifierEngine {
       // Count frames in the window where the spine is horizontal (>45°)
       const validSpineFrames = this.spineBuffer.filter(v => v !== null) as number[];
       const horizontalFrames = validSpineFrames.filter(v => v > 45).length;
-      const horizontalRatio  = validSpineFrames.length > 0
+      const horizontalRatio = validSpineFrames.length > 0
         ? horizontalFrames / validSpineFrames.length
         : 0;
 
@@ -311,6 +316,20 @@ class ClassifierEngine {
             push_ups: Math.min(0.95, horizontalRatio),
           },
           biomechanicsOverride: true,
+        };
+      }
+
+      // Override: body is vertical (<20% horizontal) but LSTM predicted bench_press
+      // This is a common error when doing seated pull-ups or shoulder presses.
+      const isVertical = horizontalRatio < 0.20;
+      if (isVertical && lstmResult.label === 'bench_press') {
+        console.debug('[BioOverride] Rejected bench_press because body is vertical. Triggering Gemini AI fallback.');
+        return {
+          label: 'unknown_vertical',
+          confidence: 0,
+          probabilities: lstmResult.probabilities,
+          biomechanicsOverride: true,
+          needsAiFallback: true // Trigger the REAL Gemini AI
         };
       }
 
@@ -343,9 +362,9 @@ class ClassifierEngine {
    * Called at workout start to avoid stale window carryover.
    */
   clearBuffer(): void {
-    this.frameBuffer   = [];
-    this.spineBuffer   = [];
-    this.elbowBuffer   = [];
+    this.frameBuffer = [];
+    this.spineBuffer = [];
+    this.elbowBuffer = [];
   }
 
   get isLoaded(): boolean {
