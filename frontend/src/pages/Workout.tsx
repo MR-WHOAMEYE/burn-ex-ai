@@ -188,7 +188,7 @@ export function WorkoutPage() {
   const requestRef = useRef<number | null>(null);
 
   const [isCameraActive, setIsCameraActive] = useState(false);
-  const [isModelLoading, setIsModelLoading] = useState(true);
+  const [isModelLoading, setIsModelLoading] = useState(false);
   const [isWorkoutActive, setIsWorkoutActive] = useState(false);
   const [phoneConnected, setPhoneConnected] = useState(false);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
@@ -462,12 +462,15 @@ export function WorkoutPage() {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Load estimation models
+    // Load models lazily (only now, when camera is active — not on page mount)
+    setIsModelLoading(true);
     addLog('Initializing TensorFlow.js models...');
     classifierEngine.initialize().then(() => {
       addLog('🤖 MoveNet & LSTM classifiers ready');
+      setIsModelLoading(false);
     }).catch((err) => {
       addLog(`❌ Model initialization failed: ${err?.message || err}`);
+      setIsModelLoading(false);
     });
 
     let frameCount = 0;
@@ -642,20 +645,10 @@ export function WorkoutPage() {
   }, [isCameraActive, addLog]);
 
 
-  // Model initialization on page mount (Phase 2 spec)
-  useEffect(() => {
-    setIsModelLoading(true);
-    addLog('Initializing TensorFlow.js models...');
-    classifierEngine.initialize()
-      .then(() => {
-        addLog('🤖 MoveNet & LSTM classifiers ready');
-        setIsModelLoading(false);
-      })
-      .catch((err) => {
-        addLog(`❌ Model initialization failed: ${err?.message || err}`);
-        setIsModelLoading(false); // don't block forever
-      });
-  }, [addLog]);
+  // Model initialization happens lazily when the camera starts (inside the
+  // isCameraActive useEffect below) — NOT on page mount. Calling initialize()
+  // here would compile WebGL shaders synchronously on the main thread,
+  // freezing the browser and causing "Page Unresponsive" before any UI appears.
 
   // ── Camera Access ──────────────────────────────────────────
   const startWorkout = useCallback(() => {
