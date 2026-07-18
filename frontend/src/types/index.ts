@@ -84,3 +84,38 @@ export interface ApiResponse<T = unknown> {
   error?: string;
   message?: string;
 }
+
+// ─── Static Pose Detection ───────────────────────────────────
+export type StaticPoseState = 'standing' | 'sitting' | 'lying' | 'unknown';
+
+export interface StaticPoseResult {
+  state: StaticPoseState;
+  confidence: number;
+  /** Duration in seconds the user has been in this state */
+  durationSeconds: number;
+}
+
+// ─── Local Coach ─────────────────────────────────────────────
+export interface LocalCoachMessage {
+  type: 'form_tip' | 'motivation' | 'sedentary_alert' | 'milestone';
+  text: string;
+  exercise?: string;
+}
+
+// ─── Calorie Suggestions ─────────────────────────────────────
+export interface Suggestion {
+  exercise: string;
+  displayName: string;
+  estimatedCalories: number;
+  recommendedDurationMinutes: number;
+  reason: string;
+  met: number;
+}
+
+export interface DailySuggestionsResponse {
+  suggestions: Suggestion[];
+  totalCaloriesBurned: number;
+  remainingCalories: number;
+  dailyTarget: number;
+}
+

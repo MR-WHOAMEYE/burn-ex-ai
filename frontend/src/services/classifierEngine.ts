@@ -144,16 +144,34 @@ class ClassifierEngine {
       this.initPromise = (async () => {
         try {
           console.log('🤖 Initializing TensorFlow.js engine...');
+          // Phase 5: explicitly request WebGL backend to avoid CPU fallback.
+          // Wrapped in try/catch — if WebGL is unavailable (e.g., browser security policy),
+          // tf.ready() will select the best available backend automatically.
+          try {
+            await tf.setBackend('webgl');
+          } catch (backendErr) {
+            console.warn('[Perf] WebGL backend unavailable, using default backend:', backendErr);
+          }
           await tf.ready();
 
-          // Load MoveNet SinglePose Lightning
-          this.poseDetector = await poseDetection.createDetector(
-            poseDetection.SupportedModels.MoveNet,
-            {
-              modelType: poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING,
-            }
-          );
-          console.log('✅ MoveNet pose detector loaded');
+          // Load MoveNet — try local first (fast), fall back to CDN if local fails
+          try {
+            this.poseDetector = await poseDetection.createDetector(
+              poseDetection.SupportedModels.MoveNet,
+              {
+                modelType: poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING,
+                modelUrl: '/models/movenet-lightning/model.json',
+              }
+            );
+            console.log('✅ MoveNet loaded from local cache');
+          } catch (localErr) {
+            console.warn('[Perf] Local MoveNet failed, falling back to CDN:', localErr);
+            this.poseDetector = await poseDetection.createDetector(
+              poseDetection.SupportedModels.MoveNet,
+              { modelType: poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING }
+            );
+            console.log('✅ MoveNet loaded from CDN (fallback)');
+          }
 
           // Load custom Bi-LSTM LayersModel with cache-busting query parameter.
           // strict:false allows best-effort weight loading — tolerates Keras 3/TF.js
@@ -242,27 +260,31 @@ class ClassifierEngine {
 
     // ── 5. Run LSTM inference once window is full ─────────────────
     if (this.frameBuffer.length === 40) {
-      const lstmResult = tf.tidy(() => {
-        const inputTensor = tf.tensor3d([this.frameBuffer]);
-        const prediction = this.lstmModel!.predict(inputTensor) as tf.Tensor;
-        const probabilities = prediction.dataSync() as Float32Array;
+      const inputTensor = tf.tensor3d([this.frameBuffer]);
+      const prediction = this.lstmModel!.predict(inputTensor) as tf.Tensor;
+      
+      // Use async data() instead of blocking dataSync() to prevent "Page Unresponsive"
+      const probabilities = await prediction.data() as Float32Array;
+      
+      // Manually dispose since we can't use tf.tidy with async/await
+      inputTensor.dispose();
+      prediction.dispose();
 
-        let maxIndex = 0;
-        let maxVal = -1;
-        const probsMap: Record<string, number> = {};
+      let maxIndex = 0;
+      let maxVal = -1;
+      const probsMap: Record<string, number> = {};
 
-        for (let i = 0; i < EXERCISE_CLASSES.length; i++) {
-          const score = probabilities[i];
-          probsMap[EXERCISE_CLASSES[i]] = score;
-          if (score > maxVal) { maxVal = score; maxIndex = i; }
-        }
+      for (let i = 0; i < EXERCISE_CLASSES.length; i++) {
+        const score = probabilities[i];
+        probsMap[EXERCISE_CLASSES[i]] = score;
+        if (score > maxVal) { maxVal = score; maxIndex = i; }
+      }
 
-        return {
-          label: EXERCISE_CLASSES[maxIndex],
-          confidence: maxVal,
-          probabilities: probsMap,
-        };
-      });
+      const lstmResult = {
+        label: EXERCISE_CLASSES[maxIndex],
+        confidence: maxVal,
+        probabilities: probsMap,
+      };
 
       // ── 6. Biomechanics override ─────────────────────────────────
       // Count frames in the window where the spine is horizontal (>45°)
@@ -306,13 +328,20 @@ class ClassifierEngine {
 
   /**
    * Estimates raw body pose keypoints from a video frame.
+   * Phase 5: Adds performance.now() markers — warns if inference > 33ms (< 30fps).
    */
   async estimatePoses(
     video: HTMLVideoElement | HTMLCanvasElement
   ): Promise<poseDetection.Pose[]> {
     await this.initialize();
     if (!this.poseDetector) return [];
-    return this.poseDetector.estimatePoses(video);
+    const t0 = performance.now();
+    const result = await this.poseDetector.estimatePoses(video);
+    const elapsed = performance.now() - t0;
+    if (elapsed > 33) {
+      console.debug(`[Perf] estimatePoses took ${elapsed.toFixed(1)}ms (below 30fps threshold)`);
+    }
+    return result;
   }
 
   /**

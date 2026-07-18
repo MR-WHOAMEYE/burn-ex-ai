@@ -118,9 +118,58 @@
   left: 0;
   width: 100%;
   height: 100%;
+  object-fit: cover; /* Align exactly with video layout */
   pointer-events: none;
   transform: scaleX(-1); /* Mirror sync skeleton */
   z-index: 5;
+}
+
+.modelLoadingOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(4, 13, 18, 0.8); /* Semi-transparent surface */
+  backdrop-filter: blur(4px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 20;
+  color: var(--color-foreground);
+}
+
+.spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid rgba(250, 177, 98, 0.2);
+  border-left-color: var(--color-accent);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 16px;
+}
+
+.miniSpinner {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid rgba(250, 177, 98, 0.3);
+  border-left-color: var(--color-accent);
+  animation: spin 1s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loadingText {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: var(--color-accent);
 }
 
 .calibrationBadge {

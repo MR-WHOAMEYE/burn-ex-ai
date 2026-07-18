@@ -25,6 +25,7 @@ import { upsertProfile, getProfile, logWeight } from './controllers/profileContr
 import { logWorkout, getWorkoutHistory } from './controllers/workoutController.js';
 import { setupGeminiLiveProxy } from './services/geminiLiveService.js';
 import { spotifyController } from './controllers/spotifyController.js';
+import { suggestionController } from './services/suggestionEngine.js';
 
 async function bootstrap(): Promise<void> {
   // ─── Initialize External Services ─────────────────────────
@@ -80,6 +81,11 @@ async function bootstrap(): Promise<void> {
   app.post('/api/spotify/player/pause', spotifyController.pause as any);
   app.post('/api/spotify/player/play', spotifyController.play as any);
   app.post('/api/spotify/player/next', spotifyController.next as any);
+
+  // ─── Suggestion Engine Routes ─────────────────────────────
+  app.get('/api/suggestions/daily', suggestionController.daily);
+  app.get('/api/suggestions/exercise-tip', suggestionController.exerciseTip);
+  app.post('/api/suggestions/check-sedentary', suggestionController.checkSedentary);
 
   // ─── Socket.IO Server ─────────────────────────────────────
   const io = new SocketIOServer(httpServer, {

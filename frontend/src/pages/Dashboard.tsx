@@ -5,7 +5,8 @@
  * Designed with strict attention to typography, margins, card grouping,
  * micro-animations, and visual balance.
  */
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
+import type { Suggestion } from '../types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { QRCodeSVG } from 'qrcode.react';
 import {
@@ -178,6 +179,37 @@ export function DashboardPage() {
 
   const completedQuestsCount = quests.filter(q => q.completed).length;
   const questCompletionPercent = Math.round((completedQuestsCount / quests.length) * 100);
+
+  // ─── Daily Burn Suggestions ────────────────────────────────
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+  const [suggestionsLoading, setSuggestionsLoading] = useState(false);
+  const [remainingCalories, setRemainingCalories] = useState(0);
+  const [dailyTarget, setDailyTarget] = useState(0);
+
+  useEffect(() => {
+    const fetchSuggestions = async () => {
+      setSuggestionsLoading(true);
+      try {
+        // Use dailyCalories state values. Pass burned from current data.
+        const burned = dailyCalories.current;
+        const target = 2000; // default target; ideally from user profile API
+        const res = await fetch(
+          `http://localhost:8080/api/suggestions/daily?weightKg=70&targetCalories=${target}&burnedCalories=${burned}`
+        );
+        if (res.ok) {
+          const data = await res.json();
+          setSuggestions(data.suggestions || []);
+          setRemainingCalories(data.remainingCalories || 0);
+          setDailyTarget(data.dailyTarget || target);
+        }
+      } catch (e) {
+        console.warn('Could not fetch suggestions:', e);
+      } finally {
+        setSuggestionsLoading(false);
+      }
+    };
+    fetchSuggestions();
+  }, []);
 
   return (
     <div className={styles.dashboard}>
@@ -984,6 +1016,81 @@ export function DashboardPage() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* ─── 🔥 TODAY'S BURN RECOMMENDATIONS ─── */}
+      <div className={styles.sectionContainer} style={{ marginTop: '2rem' }}>
+        <div className={styles.sectionHeader}>
+          <h2 className={styles.sectionTitle}>🔥 Today's Burn Recommendations</h2>
+          <p className={styles.sectionSubtitle}>Personalized exercises to hit your daily calorie target</p>
+        </div>
+
+        {/* Daily calorie progress bar */}
+        <div className="card" style={{ padding: '1.25rem 1.5rem', marginBottom: '1rem', background: 'rgba(250, 177, 98, 0.04)', border: '1px solid rgba(250, 177, 98, 0.12)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+            <span style={{ fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.1em', color: 'var(--color-muted)' }}>DAILY CALORIE PROGRESS</span>
+            <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-accent)' }}>
+              {dailyCalories.current} / {dailyTarget || 2000} kcal
+            </span>
+          </div>
+          <div style={{ height: '8px', background: 'rgba(255,255,255,0.06)', borderRadius: '4px', overflow: 'hidden' }}>
+            <div style={{
+              height: '100%',
+              width: `${Math.min(100, Math.round((dailyCalories.current / (dailyTarget || 2000)) * 100))}%`,
+              background: 'linear-gradient(90deg, var(--color-accent), #ff9057)',
+              borderRadius: '4px',
+              transition: 'width 0.6s ease',
+            }} />
+          </div>
+          <p style={{ fontSize: '0.75rem', color: 'var(--color-muted)', marginTop: '8px', marginBottom: 0 }}>
+            {remainingCalories > 0
+              ? `${remainingCalories} kcal remaining to reach your daily target`
+              : '🎉 Daily calorie target reached!'}
+          </p>
+        </div>
+
+        {/* Suggestion cards */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1rem' }}>
+          {suggestionsLoading ? (
+            <div style={{ gridColumn: '1/-1', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--color-muted)', padding: '1rem 0' }}>
+              <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} />
+              Loading personalized recommendations...
+            </div>
+          ) : suggestions.length > 0 ? suggestions.map((s, i) => (
+            <div key={s.exercise} className="card" style={{
+              padding: '1.25rem',
+              background: i === 0 ? 'rgba(250, 177, 98, 0.06)' : 'rgba(255,255,255,0.02)',
+              border: `1px solid ${i === 0 ? 'rgba(250, 177, 98, 0.2)' : 'rgba(255,255,255,0.06)'}`,
+              borderRadius: '12px',
+              position: 'relative',
+              overflow: 'hidden',
+            }}>
+              {i === 0 && (
+                <span style={{ position: 'absolute', top: '10px', right: '10px', fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.08em', background: 'var(--color-accent)', color: '#000', padding: '2px 8px', borderRadius: '20px' }}>
+                  TOP PICK
+                </span>
+              )}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+                <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'rgba(250, 177, 98, 0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Dumbbell size={18} style={{ color: 'var(--color-accent)' }} />
+                </div>
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--color-text)' }}>{s.displayName}</div>
+                  <div style={{ fontSize: '0.7rem', color: 'var(--color-muted)' }}>{s.recommendedDurationMinutes} min • MET {s.met}</div>
+                </div>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                <span style={{ fontSize: '0.7rem', color: 'var(--color-muted)', fontWeight: 600, letterSpacing: '0.08em' }}>EST. BURN</span>
+                <span style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--color-accent)' }}>~{s.estimatedCalories} kcal</span>
+              </div>
+              <p style={{ fontSize: '0.75rem', color: 'var(--color-muted)', lineHeight: 1.5, margin: 0 }}>{s.reason}</p>
+            </div>
+          )) : (
+            <div style={{ gridColumn: '1/-1', color: 'var(--color-muted)', fontSize: '0.85rem', padding: '1rem 0' }}>
+              No suggestions available. Start a workout to generate personalized recommendations!
+            </div>
+          )}
+        </div>
+      </div>
 
     </div>
   );

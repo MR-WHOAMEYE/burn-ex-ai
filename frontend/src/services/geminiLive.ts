@@ -1,9 +1,26 @@
+/**
+ * Burn-Ex AI — Gemini Live WebSocket Client
+ *
+ * Fixes applied:
+ *  - Bug #8: WS URL now uses VITE_GEMINI_WS_URL env var with localhost fallback
+ *  - Bug #9: AudioWorklet blob URL is stored and revoked on disconnect
+ *  - Bug #11: 10-second connection timeout; rejects and shows error message
+ *
+ * New features:
+ *  - sendContextUpdate(text): sends a text-only realtime input for background
+ *    periodic pose/calorie checks without requiring an audio/video frame.
+ */
+
+const WS_URL =
+  (import.meta as any).env?.VITE_GEMINI_WS_URL ?? 'ws://localhost:8080/api/gemini-live';
+
 export class GeminiLiveClient {
   private ws: WebSocket | null = null;
   private audioContext: AudioContext | null = null;
   private mediaStream: MediaStream | null = null;
   private videoInterval: number | null = null;
   private isConnected = false;
+  private blobUrl: string | null = null; // Bug #9: track for cleanup
 
   constructor(
     private videoElement: HTMLVideoElement,
@@ -13,26 +30,45 @@ export class GeminiLiveClient {
   async connect() {
     if (this.isConnected) return;
 
-    // Connect to our backend proxy
-    this.ws = new WebSocket('ws://localhost:8080/api/gemini-live');
-    this.ws.binaryType = 'arraybuffer';
+    // Bug #11: 10-second connection timeout
+    await new Promise<void>((resolve, reject) => {
+      const timeoutId = setTimeout(() => {
+        if (!this.isConnected) {
+          this.ws?.close();
+          reject(new Error('Connection to Gemini timed out after 10 seconds'));
+        }
+      }, 10000);
 
-    this.ws.onopen = async () => {
-      console.log('🔗 Connected to Gemini Live via proxy');
-      this.isConnected = true;
-      this.onMessage('Voice Coach connected. Say hi!');
-      
-      // Start streaming audio and video
-      await this.startAudioStream();
-      this.startVideoStream();
-    };
+      // Connect to our backend proxy
+      this.ws = new WebSocket(WS_URL); // Bug #8: use env var
+      this.ws.binaryType = 'arraybuffer';
+
+      this.ws.onopen = async () => {
+        clearTimeout(timeoutId);
+        console.log('🔗 Connected to Gemini Live via proxy');
+        this.isConnected = true;
+        this.onMessage('Voice Coach connected. Say hi!');
+
+        // Start streaming audio and video
+        await this.startAudioStream();
+        this.startVideoStream();
+        resolve();
+      };
+
+      this.ws.onerror = (err) => {
+        clearTimeout(timeoutId);
+        reject(err);
+      };
+    });
+
+    if (!this.ws) return;
 
     this.ws.onmessage = async (event) => {
       try {
-        const data = event.data instanceof ArrayBuffer 
-          ? new TextDecoder().decode(event.data) 
+        const data = event.data instanceof ArrayBuffer
+          ? new TextDecoder().decode(event.data)
           : event.data as string;
-          
+
         const response = JSON.parse(data);
 
         // Handle ServerContent (text/audio from Gemini)
@@ -54,6 +90,20 @@ export class GeminiLiveClient {
       console.log('🔌 Disconnected from Gemini Live');
       this.disconnect();
     };
+  }
+
+  /**
+   * Sends a text-only context update to Gemini (for periodic background checks).
+   * Does not require audio/video — used for static pose & calorie updates.
+   */
+  sendContextUpdate(text: string) {
+    if (!this.isConnected || !this.ws || this.ws.readyState !== WebSocket.OPEN) return;
+    const msg = {
+      realtimeInput: {
+        text,
+      },
+    };
+    this.ws.send(JSON.stringify(msg));
   }
 
   private async startAudioStream() {
@@ -82,7 +132,8 @@ export class GeminiLiveClient {
         registerProcessor('pcm-processor', PCMProcessor);
       `;
       const blob = new Blob([workletCode], { type: 'application/javascript' });
-      await this.audioContext.audioWorklet.addModule(URL.createObjectURL(blob));
+      this.blobUrl = URL.createObjectURL(blob); // Bug #9: store for cleanup
+      await this.audioContext.audioWorklet.addModule(this.blobUrl);
 
       const processor = new AudioWorkletNode(this.audioContext, 'pcm-processor');
       source.connect(processor);
@@ -92,7 +143,7 @@ export class GeminiLiveClient {
         if (!this.isConnected || !this.ws) return;
         const pcmBuffer = e.data as ArrayBuffer;
         const base64Data = this.arrayBufferToBase64(pcmBuffer);
-        
+
         // Send RealtimeInput Audio Chunk
         const msg = {
           realtimeInput: {
@@ -111,21 +162,32 @@ export class GeminiLiveClient {
     }
   }
 
+  private frameCount = 0;
+  private lastFrameData: string | null = null;
+
   private startVideoStream() {
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
-    
-    // Send 1 frame per second to Gemini to save bandwidth
+
+    // Send 1 frame per second for first 5s, then 1 per 5s if no change
     this.videoInterval = window.setInterval(() => {
       if (!this.isConnected || !this.ws || !this.videoElement) return;
       if (this.videoElement.videoWidth === 0) return;
 
+      this.frameCount++;
+      // After first 5 frames, only send every 5th frame
+      if (this.frameCount > 5 && this.frameCount % 5 !== 0) return;
+
       canvas.width = this.videoElement.videoWidth;
       canvas.height = this.videoElement.videoHeight;
       ctx?.drawImage(this.videoElement, 0, 0, canvas.width, canvas.height);
-      
-      const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
       const base64Data = dataUrl.split(',')[1];
+
+      // Skip if frame is identical to last sent
+      if (this.frameCount > 5 && base64Data === this.lastFrameData) return;
+      this.lastFrameData = base64Data;
 
       const msg = {
         realtimeInput: {
@@ -135,7 +197,7 @@ export class GeminiLiveClient {
           }
         }
       };
-      
+
       if (this.ws.readyState === WebSocket.OPEN) {
         this.ws.send(JSON.stringify(msg));
       }
@@ -164,7 +226,7 @@ export class GeminiLiveClient {
 
     const audioBuffer = this.playbackContext.createBuffer(1, float32.length, 24000);
     audioBuffer.getChannelData(0).set(float32);
-    
+
     this.audioQueue.push(audioBuffer);
     if (!this.isPlaying) {
       this.playNextAudio();
@@ -192,7 +254,7 @@ export class GeminiLiveClient {
     const bytes = new Uint8Array(buffer);
     const len = bytes.byteLength;
     for (let i = 0; i < len; i++) {
-        binary += String.fromCharCode(bytes[i]);
+      binary += String.fromCharCode(bytes[i]);
     }
     return window.btoa(binary);
   }
@@ -215,6 +277,13 @@ export class GeminiLiveClient {
       this.audioContext.close();
       this.audioContext = null;
     }
+    // Bug #9: revoke blob URL to prevent memory leak
+    if (this.blobUrl) {
+      URL.revokeObjectURL(this.blobUrl);
+      this.blobUrl = null;
+    }
+    this.frameCount = 0;
+    this.lastFrameData = null;
     this.onMessage('Voice Coach disconnected.');
   }
 }

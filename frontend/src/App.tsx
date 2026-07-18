@@ -7,12 +7,36 @@
  *   3. ProtectedRoute wrapper to gate dashboards
  *   4. Lazy-loaded code-splitting views
  */
-import { useState, lazy, Suspense } from 'react';
+import { useState, lazy, Suspense, Component, type ReactNode } from 'react';
 import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { Sidebar } from './components/layout/Sidebar';
 import { TopBar } from './components/layout/TopBar';
 import type { Theme } from './types';
+
+// ─── Error Boundary ──────────────────────────────────────────
+class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
+  state = { error: null };
+  static getDerivedStateFromError(error: Error) { return { error }; }
+  render() {
+    if (this.state.error) {
+      const err = this.state.error as Error;
+      return (
+        <div style={{ padding: '40px', fontFamily: 'monospace', color: '#f87171', background: '#0f0f1a', minHeight: '100vh' }}>
+          <h2 style={{ color: '#facc15', marginBottom: '16px' }}>⚠️ Runtime Error — Page Crashed</h2>
+          <pre style={{ whiteSpace: 'pre-wrap', fontSize: '0.85rem', lineHeight: 1.6 }}>
+            {err.message}{'\n\n'}{err.stack}
+          </pre>
+          <button onClick={() => window.location.reload()} style={{ marginTop: '24px', padding: '10px 24px', background: '#facc15', color: '#000', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 700 }}>
+            Reload Page
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 
 // ─── Lazy-loaded Pages (Code Splitting) ─────────────────────
 const DashboardPage = lazy(() =>
@@ -206,10 +230,12 @@ export default function App() {
   };
 
   return (
-    <AuthProvider>
-      <BrowserRouter>
-        <AppLayout theme={theme} onToggleTheme={toggleTheme} />
-      </BrowserRouter>
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <BrowserRouter>
+          <AppLayout theme={theme} onToggleTheme={toggleTheme} />
+        </BrowserRouter>
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }
